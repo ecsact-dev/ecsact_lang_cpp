@@ -1,0 +1,24 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_binary(
+    name = "ecsact_cpp_header_codegen",
+    srcs = ["header_codegen.cc"],
+    copts = copts,
+    linkshared = True,
+    deps = [
+        "//:support",
+        "@ecsact_runtime//:codegen_plugin_entry",
+        "@ecsact_runtime//:codegen_plugin_lib",
+        "@ecsact_runtime//:meta",
+    ],
+)
+
+filegroup(
+    name = "header_codegen",
+    srcs = [
+        ":ecsact_cpp_header_codegen",
+    ],
+)
