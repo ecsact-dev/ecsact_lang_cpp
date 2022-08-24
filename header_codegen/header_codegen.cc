@@ -90,6 +90,10 @@ static void write_fields
 	}
 }
 
+const char* ecsact_codegen_plugin_name() {
+	return "hh";
+}
+
 void ecsact_codegen_plugin
 	( ecsact_package_id package_id
 	)
