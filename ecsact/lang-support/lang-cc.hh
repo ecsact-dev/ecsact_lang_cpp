@@ -29,6 +29,30 @@ inline std::string cpp_identifier
 	return str;
 }
 
+/**
+ * Convert strings like foo.bar to foo__bar
+ */
+inline std::string c_identifier
+	( std::string str
+	)
+{
+	auto idx = str.find_first_of('.');
+	while(idx != std::string::npos) {
+		auto replace_length = 1;
+		auto next_idx = str.find_first_of('.', idx + 1);
+		while(next_idx != std::string::npos && next_idx == idx + 1) {
+			next_idx = str.find_first_of('.', next_idx + 1);
+			replace_length += 1;
+		}
+
+		str.replace(idx, replace_length, "__");
+
+		idx = str.find_first_of('.');
+	}
+
+	return str;
+}
+
 constexpr auto cpp_type_str
 	( ecsact_builtin_type type
 	)

@@ -3,6 +3,17 @@ workspace(name = "ecsact_lang_cpp")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "boost",
+    sha256 = "c41441a6e9f8038ad626e9f937ddc3675ab896b6c3512eefc6840037b3816d03",
+    strip_prefix = "boost-563e8e0de4eac4b48a02d296581dc2454127608e",
+    urls = ["https://github.com/bazelboost/boost/archive/563e8e0de4eac4b48a02d296581dc2454127608e.zip"],
+)
+
+load("@boost//:index.bzl", "boost_http_archives")
+
+boost_http_archives()
+
+http_archive(
     name = "com_google_googletest",
     sha256 = "3da9a88683d892ee782d7825061a12f2b7d03da54f0c0023886c51cc44102e9e",
     strip_prefix = "googletest-c0e032efe587efa99413dd9ac54c3953a7915588",
