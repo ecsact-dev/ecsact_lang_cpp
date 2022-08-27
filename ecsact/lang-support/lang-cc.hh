@@ -58,6 +58,7 @@ constexpr auto cpp_type_str
 	)
 {
 	switch(type) {
+		case ECSACT_BOOL: return "bool";
 		case ECSACT_I8: return "int8_t";
 		case ECSACT_U8: return "uint8_t";
 		case ECSACT_I16: return "int16_t";
@@ -65,7 +66,7 @@ constexpr auto cpp_type_str
 		case ECSACT_I32: return "int32_t";
 		case ECSACT_U32: return "uint32_t";
 		case ECSACT_F32: return "float";
-		case ECSACT_ENTITY_TYPE: return "::ecsact::entity_id";
+		case ECSACT_ENTITY_TYPE: return "::ecsact_entity_id";
 	}
 }
 

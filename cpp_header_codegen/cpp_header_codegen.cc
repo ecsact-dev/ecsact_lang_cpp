@@ -9,6 +9,24 @@
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
+template<typename T>
+static void write_constexpr_id
+	( ecsact::codegen_plugin_context&  ctx
+	, const char*                      id_type_name
+	, T                                id
+	, std::string_view                 indentation
+	)
+{
+	ctx.write(
+		indentation,
+		"static constexpr auto id = static_cast<",
+		id_type_name,
+		">(",
+		static_cast<int32_t>(id),
+		");\n"
+	);
+}
+
 static std::vector<ecsact_component_id> get_component_ids
 	( ecsact_package_id package_id
 	)
@@ -136,10 +154,19 @@ static void write_fields
 	);
 }
 
-static void write_system_sruct
+static void write_system_impl_decl
+	( ecsact::codegen_plugin_context&  ctx
+	, std::string_view                 indentation
+	)
+{
+	ctx.write(indentation, "struct context;\n");
+	ctx.write(indentation, "static void impl(context&);\n");
+}
+
+static void write_system_struct
 	( ecsact::codegen_plugin_context&  ctx
 	, ecsact_system_id                 sys_id
-	, std::string_view                 indentation
+	, std::string                      indentation
 	)
 {
 	using namespace std::string_literals;
@@ -147,14 +174,15 @@ static void write_system_sruct
 	std::string sys_name = ecsact_meta_system_name(sys_id);
 	if(!sys_name.empty()) {
 		ctx.write(indentation, "struct "s, sys_name, " {\n"s);
+		write_constexpr_id(ctx, "ecsact_system_id", sys_id, indentation + "\t");
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
-			write_system_sruct(ctx, child_system_id, std::string(indentation) + "\t");
+			write_system_struct(ctx, child_system_id, indentation + "\t");
 		}
-		ctx.write(indentation, "\tstruct context;\n\n"s);
+		write_system_impl_decl(ctx, indentation + "\t");
 		ctx.write(indentation, "};\n"s);
 	} else {
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
-			write_system_sruct(ctx, child_system_id, indentation);
+			write_system_struct(ctx, child_system_id, indentation);
 		}
 	}
 }
@@ -178,6 +206,7 @@ void ecsact_codegen_plugin
 
 	ctx.write("#include <cstdint>\n");
 	ctx.write("#include <compare>\n");
+	ctx.write("#include \"ecsact/runtime/common.h\"\n");
 	ctx.write("\n");
 
 	const auto namespace_str =
@@ -188,6 +217,7 @@ void ecsact_codegen_plugin
 	for(auto comp_id : get_component_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
 		ctx.write("struct "s, ecsact_meta_component_name(comp_id), " {\n"s);
+		write_constexpr_id(ctx, "ecsact_component_id", comp_id, "\t");
 		write_fields(ctx, compo_id, "\t"s);
 		ctx.write("};\n"s);
 	}
@@ -195,10 +225,11 @@ void ecsact_codegen_plugin
 	for(auto action_id : get_action_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(action_id);
 		ctx.write("struct "s, ecsact_meta_action_name(action_id), " {\n"s);
+		write_constexpr_id(ctx, "ecsact_action_id", compo_id, "\t");
 		for(auto child_system_id : get_child_system_ids(action_id)) {
-			write_system_sruct(ctx, child_system_id, "\t");
+			write_system_struct(ctx, child_system_id, "\t");
 		}
-		ctx.write("\tstruct context;\n\n"s);
+		write_system_impl_decl(ctx, "\t");
 		write_fields(ctx, compo_id, "\t");
 		ctx.write("};\n"s);
 	}
@@ -208,7 +239,7 @@ void ecsact_codegen_plugin
 			continue;
 		}
 
-		write_system_sruct(ctx, sys_id, "");
+		write_system_struct(ctx, sys_id, "");
 	}
 
 	ctx.write("\n}// namespace "s, namespace_str, "\n"s);
