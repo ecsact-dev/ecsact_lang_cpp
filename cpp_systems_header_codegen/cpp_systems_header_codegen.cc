@@ -155,8 +155,8 @@ void ecsact_codegen_plugin
 
 		std::vector<ecsact_component_id> cap_comp_ids;
 		std::vector<ecsact_system_capability> caps;
-		cap_comp_ids.reserve(cap_count);
-		caps.reserve(cap_count);
+		cap_comp_ids.resize(cap_count);
+		caps.resize(cap_count);
 
 		ecsact_meta_system_capabilities(
 			sys_like_id,

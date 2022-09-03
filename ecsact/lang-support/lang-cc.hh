@@ -70,4 +70,15 @@ constexpr auto cpp_type_str
 	}
 }
 
+constexpr auto c_type_str
+	( ecsact_builtin_type type
+	)
+{
+	if(type == ECSACT_ENTITY_TYPE) {
+		return "ecsact_entity_id";
+	} else {
+		return cpp_type_str(type);
+	}
+}
+
 } // namespace ecsact::cc_lang_support
