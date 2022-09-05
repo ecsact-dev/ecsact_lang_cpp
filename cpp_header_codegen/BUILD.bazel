@@ -7,7 +7,6 @@ cc_ecsact_codegen_plugin(
     name = "ecsact_cpp_header_codegen",
     srcs = ["cpp_header_codegen.cc"],
     copts = copts,
-    no_validate_test = True,  # file name is too long on Windows
     deps = ["//:support"],
 )
 
