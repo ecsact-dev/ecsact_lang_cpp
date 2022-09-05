@@ -3,7 +3,7 @@
 #include <cassert>
 #include <filesystem>
 #include <set>
-#include "ecsact/runtime/meta.h"
+#include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen_plugin.h"
 #include "ecsact/codegen_plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -113,6 +113,7 @@ void ecsact_codegen_plugin
 {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cc_lang_support::c_identifier;
+	using ecsact::cc_lang_support::anonymous_system_name;
 
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
@@ -143,7 +144,8 @@ void ecsact_codegen_plugin
 		);
 
 		if(full_name.empty()) {
-			continue;
+			full_name += ecsact::meta::package_name(ctx.package_id) + ".";
+			full_name += anonymous_system_name(sys_id);
 		}
 
 		ctx.write("\nstruct ", cpp_identifier(full_name), "::context {\n");

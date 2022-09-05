@@ -170,6 +170,7 @@ static void write_system_struct
 	)
 {
 	using namespace std::string_literals;
+	using ecsact::cc_lang_support::anonymous_system_name;
 
 	std::string sys_name = ecsact_meta_system_name(sys_id);
 	if(!sys_name.empty()) {
@@ -181,6 +182,11 @@ static void write_system_struct
 		write_system_impl_decl(ctx, indentation + "\t");
 		ctx.write(indentation, "};\n"s);
 	} else {
+		ctx.write(indentation, "struct "s, anonymous_system_name(sys_id), " {\n");
+		write_constexpr_id(ctx, "ecsact_system_id", sys_id, indentation + "\t");
+		ctx.write(indentation, "\tstruct context;\n");
+		ctx.write(indentation, "};\n"s);
+
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
 			write_system_struct(ctx, child_system_id, indentation);
 		}

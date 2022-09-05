@@ -81,4 +81,13 @@ constexpr auto c_type_str
 	}
 }
 
+template<typename SystemID>
+constexpr std::string anonymous_system_name
+	( SystemID id
+	)
+{
+	auto sys_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	return "AnonymousSystem_" + std::to_string((int)sys_id);
+}
+
 } // namespace ecsact::cc_lang_support
