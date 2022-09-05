@@ -82,7 +82,7 @@ constexpr auto c_type_str
 }
 
 template<typename SystemID>
-constexpr std::string anonymous_system_name
+inline std::string anonymous_system_name
 	( SystemID id
 	)
 {
