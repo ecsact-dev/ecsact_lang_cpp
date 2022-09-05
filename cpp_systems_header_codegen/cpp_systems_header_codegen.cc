@@ -3,7 +3,7 @@
 #include <cassert>
 #include <filesystem>
 #include <set>
-#include "ecsact/runtime/meta.h"
+#include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen_plugin.h"
 #include "ecsact/codegen_plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -113,6 +113,7 @@ void ecsact_codegen_plugin
 {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cc_lang_support::c_identifier;
+	using ecsact::cc_lang_support::anonymous_system_name;
 
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
@@ -143,7 +144,8 @@ void ecsact_codegen_plugin
 		);
 
 		if(full_name.empty()) {
-			continue;
+			full_name += ecsact::meta::package_name(ctx.package_id) + ".";
+			full_name += anonymous_system_name(sys_id);
 		}
 
 		ctx.write("\nstruct ", cpp_identifier(full_name), "::context {\n");
@@ -155,8 +157,8 @@ void ecsact_codegen_plugin
 
 		std::vector<ecsact_component_id> cap_comp_ids;
 		std::vector<ecsact_system_capability> caps;
-		cap_comp_ids.reserve(cap_count);
-		caps.reserve(cap_count);
+		cap_comp_ids.resize(cap_count);
+		caps.resize(cap_count);
 
 		ecsact_meta_system_capabilities(
 			sys_like_id,

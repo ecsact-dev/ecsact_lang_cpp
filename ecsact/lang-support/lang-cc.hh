@@ -70,4 +70,24 @@ constexpr auto cpp_type_str
 	}
 }
 
+constexpr auto c_type_str
+	( ecsact_builtin_type type
+	)
+{
+	if(type == ECSACT_ENTITY_TYPE) {
+		return "ecsact_entity_id";
+	} else {
+		return cpp_type_str(type);
+	}
+}
+
+template<typename SystemID>
+inline std::string anonymous_system_name
+	( SystemID id
+	)
+{
+	auto sys_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	return "AnonymousSystem_" + std::to_string((int)sys_id);
+}
+
 } // namespace ecsact::cc_lang_support

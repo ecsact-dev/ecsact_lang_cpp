@@ -3,6 +3,20 @@ workspace(name = "ecsact_lang_cpp")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "ecsact_runtime",
+    sha256 = "b2544c9a0cea708d439bf79e3d9319382967d44a8c57f60ddab214599aaba116",
+    strip_prefix = "ecsact_runtime-376603487a3db757811e03e7f44958a74dc337e3",
+    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/376603487a3db757811e03e7f44958a74dc337e3.zip",
+)
+
+http_archive(
+    name = "ecsact_parse",
+    sha256 = "5a3b6938c7f53856cee2f7b9a128d226cfc066155932632ab7748f2359d8fe7a",
+    strip_prefix = "ecsact_parse-1540e46da03124ea0422ae2bb9a470a2717d4d22",
+    url = "https://github.com/ecsact-dev/ecsact_parse/archive/1540e46da03124ea0422ae2bb9a470a2717d4d22.zip",
+)
+
+http_archive(
     name = "boost",
     sha256 = "c41441a6e9f8038ad626e9f937ddc3675ab896b6c3512eefc6840037b3816d03",
     strip_prefix = "boost-563e8e0de4eac4b48a02d296581dc2454127608e",
