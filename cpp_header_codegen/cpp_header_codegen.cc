@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 #include <cassert>
-#include "ecsact/runtime/meta.h"
+#include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen_plugin.h"
 #include "ecsact/codegen_plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -25,72 +25,6 @@ static void write_constexpr_id
 		static_cast<int32_t>(id),
 		");\n"
 	);
-}
-
-static std::vector<ecsact_component_id> get_component_ids
-	( ecsact_package_id package_id
-	)
-{
-	std::vector<ecsact_component_id> component_ids;
-	component_ids.resize(ecsact_meta_count_components(package_id));
-	ecsact_meta_get_component_ids(
-		package_id,
-		static_cast<int32_t>(component_ids.size()),
-		component_ids.data(),
-		nullptr
-	);
-
-	return component_ids;
-}
-
-static std::vector<ecsact_system_id> get_system_ids
-	( ecsact_package_id package_id
-	)
-{
-	std::vector<ecsact_system_id> system_ids;
-	system_ids.resize(ecsact_meta_count_systems(package_id));
-	ecsact_meta_get_system_ids(
-		package_id,
-		static_cast<int32_t>(system_ids.size()),
-		system_ids.data(),
-		nullptr
-	);
-
-	return system_ids;
-}
-
-template<typename T>
-static std::vector<ecsact_system_id> get_child_system_ids
-	( T id
-	)
-{
-	ecsact_system_like_id system_id = ecsact_id_cast<ecsact_system_like_id>(id);
-	std::vector<ecsact_system_id> child_system_ids;
-	child_system_ids.resize(ecsact_meta_count_child_systems(system_id));
-	ecsact_meta_get_child_system_ids(
-		system_id,
-		static_cast<int32_t>(child_system_ids.size()),
-		child_system_ids.data(),
-		nullptr
-	);
-
-	return child_system_ids;
-}
-
-static std::vector<ecsact_action_id> get_action_ids
-	( ecsact_package_id package_id
-	)
-{
-	std::vector<ecsact_action_id> action_ids;
-	action_ids.resize(ecsact_meta_count_actions(package_id));
-	ecsact_meta_get_action_ids(
-		package_id,
-		static_cast<int32_t>(action_ids.size()),
-		action_ids.data(),
-		nullptr
-	);
-
-	return action_ids;
 }
 
 template<typename T>
@@ -171,6 +105,7 @@ static void write_system_struct
 {
 	using namespace std::string_literals;
 	using ecsact::cc_lang_support::anonymous_system_name;
+	using ecsact::meta::get_child_system_ids;
 
 	std::string sys_name = ecsact_meta_system_name(sys_id);
 	if(!sys_name.empty()) {
@@ -204,8 +139,13 @@ void ecsact_codegen_plugin
 {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using namespace std::string_literals;
+	using ecsact::meta::get_component_ids;
+	using ecsact::meta::get_transient_ids;
+	using ecsact::meta::get_system_ids;
+	using ecsact::meta::get_child_system_ids;
+	using ecsact::meta::get_action_ids;
 
-  ecsact::codegen_plugin_context ctx{package_id, write_fn};
+	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 	ctx.write("#pragma once\n\n");
@@ -223,7 +163,17 @@ void ecsact_codegen_plugin
 	for(auto comp_id : get_component_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
 		ctx.write("struct "s, ecsact_meta_component_name(comp_id), " {\n"s);
+		ctx.write("\tstatic constexpr bool transient = false;\n");
 		write_constexpr_id(ctx, "ecsact_component_id", comp_id, "\t");
+		write_fields(ctx, compo_id, "\t"s);
+		ctx.write("};\n"s);
+	}
+
+	for(auto comp_id : get_transient_ids(ctx.package_id)) {
+		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
+		ctx.write("struct "s, ecsact_meta_transient_name(comp_id), " {\n"s);
+		ctx.write("\tstatic constexpr bool transient = true;\n");
+		write_constexpr_id(ctx, "ecsact_transient_id", comp_id, "\t");
 		write_fields(ctx, compo_id, "\t"s);
 		ctx.write("};\n"s);
 	}

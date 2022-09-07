@@ -217,6 +217,16 @@ void ecsact_codegen_plugin
 	);
 	ctx.write(">;\n");
 
+	ctx.write("using transients = ::ecsact::mp_list<");
+	ctx.write_each(
+		", ",
+		ecsact::meta::get_transient_ids(ctx.package_id),
+		[&](ecsact_transient_id trans_id) {
+			ctx.write(cpp_identifier(ecsact::meta::decl_full_name(trans_id)));
+		}
+	);
+	ctx.write(">;\n");
+
 	ctx.write("using systems = ::ecsact::mp_list<");
 	ctx.write_each(
 		", ",
