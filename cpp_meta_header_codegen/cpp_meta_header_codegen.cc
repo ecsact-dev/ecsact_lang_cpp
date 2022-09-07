@@ -59,7 +59,7 @@ static void write_system_execution_order
 struct system_comp_maps {
 	using system_comps_map_t = std::map
 		< ecsact_system_like_id
-		, std::vector<ecsact_component_id>
+		, std::vector<ecsact_component_like_id>
 		>;
 	system_comps_map_t readwrite_comps;
 	system_comps_map_t readonly_comps;
@@ -140,7 +140,7 @@ static void write_system_comps_map_using
 			ctx.write_each(
 				", ",
 				entry.second,
-				[&](ecsact_component_id comp_id) {
+				[&](ecsact_component_like_id comp_id) {
 					auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
 					ctx.write(cpp_identifier(comp_full_name));
 				}

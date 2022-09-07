@@ -75,7 +75,7 @@ static void write_context_remove_decl
 
 static void write_context_add_specialize
 	( ecsact::codegen_plugin_context&  ctx
-	, ecsact_component_id              comp_id
+	, ecsact_component_like_id         comp_id
 	, std::string_view                 indentation
 	)
 {
@@ -155,7 +155,7 @@ void ecsact_codegen_plugin
 		auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
 		auto cap_count = ecsact_meta_system_capabilities_count(sys_like_id);
 
-		std::vector<ecsact_component_id> cap_comp_ids;
+		std::vector<ecsact_component_like_id> cap_comp_ids;
 		std::vector<ecsact_system_capability> caps;
 		cap_comp_ids.resize(cap_count);
 		caps.resize(cap_count);
@@ -168,10 +168,10 @@ void ecsact_codegen_plugin
 			nullptr
 		);
 
-		std::set<ecsact_component_id> add_components;
-		std::set<ecsact_component_id> get_components;
-		std::set<ecsact_component_id> update_components;
-		std::set<ecsact_component_id> remove_components;
+		std::set<ecsact_component_like_id> add_components;
+		std::set<ecsact_component_like_id> get_components;
+		std::set<ecsact_component_like_id> update_components;
+		std::set<ecsact_component_like_id> remove_components;
 
 		for(int i=0; cap_count > i; ++i) {
 			auto& comp_id = cap_comp_ids[i];
