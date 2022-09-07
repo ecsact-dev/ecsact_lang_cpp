@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <ranges>
 #include <tuple>
+#include <map>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen_plugin.h"
 #include "ecsact/codegen_plugin.hh"
@@ -16,7 +17,7 @@ constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
 template<typename SystemLikeID>
-static std::string sys_full_name
+static std::string get_sys_full_name
 	( ecsact_package_id  package_id
 	, SystemLikeID       id
 	)
@@ -40,7 +41,7 @@ static void write_system_execution_order
 {
 	using ecsact::cc_lang_support::cpp_identifier;
 
-	auto full_name = sys_full_name(ctx.package_id, sys_id);
+	auto full_name = get_sys_full_name(ctx.package_id, sys_id);
 
 	ctx.write("::ecsact::mp_list<");
 	ctx.write(cpp_identifier(full_name), ", ");
@@ -55,6 +56,101 @@ static void write_system_execution_order
 	ctx.write(">>");
 }
 
+struct system_comp_maps {
+	using system_comps_map_t = std::map
+		< ecsact_system_like_id
+		, std::vector<ecsact_component_id>
+		>;
+	system_comps_map_t readwrite_comps;
+	system_comps_map_t readonly_comps;
+	system_comps_map_t writeonly_comps;
+	system_comps_map_t optional_comps;
+	system_comps_map_t adds_comps;
+	system_comps_map_t removes_comps;
+	system_comps_map_t include_comps;
+	system_comps_map_t exclude_comps;
+
+	void for_each_applicable_comps_map(auto cap, auto&& cb) {
+		if((cap & ECSACT_SYS_CAP_READWRITE) == ECSACT_SYS_CAP_READWRITE) {
+			cb(readwrite_comps);
+		} else
+		if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
+			cb(readonly_comps);
+		} else
+		if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
+			cb(writeonly_comps);
+		}
+
+		if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
+			cb(optional_comps);
+		}
+
+		if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
+			cb(removes_comps);
+		}
+
+		if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
+			cb(adds_comps);
+		}
+
+		if((cap & ECSACT_SYS_CAP_INCLUDE) == ECSACT_SYS_CAP_INCLUDE) {
+			cb(include_comps);
+		}
+
+		if((cap & ECSACT_SYS_CAP_EXCLUDE) == ECSACT_SYS_CAP_EXCLUDE) {
+			cb(exclude_comps);
+		}
+	}
+
+	template<typename SystemLikeID>
+	void set_comp_maps(SystemLikeID id) {
+		const auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
+		for(auto& entry : ecsact::meta::system_capabilities(sys_like_id)) {
+			auto comp = entry.first;
+			auto cap = entry.second;
+
+			for_each_applicable_comps_map(cap, [&](system_comps_map_t& map) {
+				map[sys_like_id].push_back(comp);
+			});
+		}
+
+		for(auto child : ecsact::meta::get_child_system_ids(id)) {
+			set_comp_maps(child);
+		}
+	}
+};
+
+static void write_system_comps_map_using
+	( ecsact::codegen_plugin_context&              ctx
+	, std::string_view                             alias_name
+	, const system_comp_maps::system_comps_map_t&  map
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	ctx.write("using ", alias_name, " = ::ecsact::mp_list<\n\t");
+	ctx.write_each(
+		",\n\t",
+		map,
+		[&](auto& entry) {
+			auto sys_full_name = get_sys_full_name(ctx.package_id, entry.first);
+			ctx.write("::ecsact::mp_list<");
+			ctx.write(cpp_identifier(sys_full_name), ", ");
+			ctx.write("::ecsact::mp_list<");
+			ctx.write_each(
+				", ",
+				entry.second,
+				[&](ecsact_component_id comp_id) {
+					auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
+					ctx.write(cpp_identifier(comp_full_name));
+				}
+			);
+			ctx.write(">>");
+		}
+	);
+	ctx.write("\n>;\n");
+}
+
 const char* ecsact_codegen_plugin_name() {
 	return "meta.hh";
 }
@@ -66,6 +162,7 @@ void ecsact_codegen_plugin
 {
 	using ecsact::cc_lang_support::anonymous_system_name;
 	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::get_top_level_systems;
 	using namespace std::string_literals;
 
   ecsact::codegen_plugin_context ctx{package_id, write_fn};
@@ -151,13 +248,61 @@ void ecsact_codegen_plugin
 
 	ctx.write_each(
 		",\n\t",
-		ecsact::meta::get_top_level_systems(ctx.package_id),
+		get_top_level_systems(ctx.package_id),
 		[&](ecsact_system_like_id sys_like_id) {
 			write_system_execution_order(ctx, sys_like_id);
 		}
 	);
 
 	ctx.write("\n>;\n");
+
+	{
+		system_comp_maps comp_maps;
+		for(auto sys_like_id : get_top_level_systems(ctx.package_id)) {
+			comp_maps.set_comp_maps(sys_like_id);
+		}
+
+		write_system_comps_map_using(
+			ctx,
+			"system_readonly_components",
+			comp_maps.readonly_comps
+		);
+		write_system_comps_map_using(
+			ctx,
+			"system_readwrite_components",
+			comp_maps.readwrite_comps
+		);
+		write_system_comps_map_using(
+			ctx,
+			"system_writeonly_components",
+			comp_maps.writeonly_comps
+		);
+		write_system_comps_map_using(
+			ctx,
+			"system_optional_components",
+			comp_maps.optional_comps
+		);
+		write_system_comps_map_using(
+			ctx,
+			"system_adds_components",
+			comp_maps.adds_comps
+		);
+		write_system_comps_map_using(
+			ctx,
+			"system_removes_components",
+			comp_maps.removes_comps
+		);
+		write_system_comps_map_using(
+			ctx,
+			"system_include_components",
+			comp_maps.include_comps
+		);
+		write_system_comps_map_using(
+			ctx,
+			"system_exclude_components",
+			comp_maps.exclude_comps
+		);
+	}
 	
 	--ctx.indentation;
 	ctx.write("\n};\n");
