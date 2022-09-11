@@ -163,6 +163,7 @@ void ecsact_codegen_plugin
 	using ecsact::cc_lang_support::anonymous_system_name;
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::get_top_level_systems;
+	using ecsact::meta::get_system_generates_components;
 	using namespace std::string_literals;
 
   ecsact::codegen_plugin_context ctx{package_id, write_fn};
@@ -255,7 +256,6 @@ void ecsact_codegen_plugin
 		"/** List of pairs. First is system. Second is list of child systems. */\n"
 	);
 	ctx.write("using execution_order = ::ecsact::mp_list<\n\t");
-
 	ctx.write_each(
 		",\n\t",
 		get_top_level_systems(ctx.package_id),
@@ -263,7 +263,6 @@ void ecsact_codegen_plugin
 			write_system_execution_order(ctx, sys_like_id);
 		}
 	);
-
 	ctx.write("\n>;\n");
 
 	{
@@ -313,6 +312,50 @@ void ecsact_codegen_plugin
 			comp_maps.exclude_comps
 		);
 	}
+
+	ctx.write("using generates = ::ecsact::mp_list<\n\t");
+	ctx.write_each(
+		",\n\t",
+		ecsact::meta::get_all_system_like_ids(package_id),
+		[&](ecsact_system_like_id sys_like_id) {
+			auto full_name = get_sys_full_name(ctx.package_id, sys_like_id);
+
+			ctx.write("::ecsact::mp_list<");
+			ctx.write(cpp_identifier(full_name), ", ");
+			ctx.write("::ecsact::mp_list<");
+			ctx.write_each(
+				", ",
+				ecsact::meta::get_system_generates_ids(sys_like_id),
+				[&](ecsact_system_generates_id gen_id) {
+					auto generates_comps = get_system_generates_components(
+						sys_like_id,
+						gen_id
+					);
+
+					ctx.write("::ecsact::mp_list<");
+					ctx.write_each(
+						", ",
+						generates_comps,
+						[&](auto& entry) {
+							auto comp_full_name = ecsact::meta::decl_full_name(entry.first);
+							switch(entry.second) {
+								case ECSACT_SYS_GEN_REQUIRED:
+									ctx.write("::ecsact::entity_component_required");
+									break;
+								case ECSACT_SYS_GEN_OPTIONAL:
+									ctx.write("::ecsact::entity_component_optional");
+									break;
+							}
+							ctx.write("<", cpp_identifier(comp_full_name), ">");
+						}
+					);
+					ctx.write(">");
+				}
+			);
+			ctx.write(">>");
+		}
+	);
+	ctx.write("\n>;\n");
 	
 	--ctx.indentation;
 	ctx.write("\n};\n");
