@@ -73,6 +73,24 @@ static void write_context_remove_decl
 	ctx.write(indentation, "void remove();\n");
 }
 
+static void write_context_get_specialize
+	( ecsact::codegen_plugin_context&  ctx
+	, ecsact_component_like_id         comp_id
+	, std::string_view                 indentation
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
+	std::string full_name = ecsact_meta_decl_full_name(decl_id);
+	std::string cpp_full_name = cpp_identifier(full_name);
+
+	ctx.write(indentation, "template<> ", cpp_full_name);
+	ctx.write(" get<", cpp_full_name, ">() {\n");
+	ctx.write(indentation, "\treturn _ctx.get<", cpp_full_name, ">();\n");
+	ctx.write(indentation, "}\n");
+}
+
 static void write_context_add_specialize
 	( ecsact::codegen_plugin_context&  ctx
 	, ecsact_component_like_id         comp_id
@@ -91,14 +109,60 @@ static void write_context_add_specialize
 
 	ctx.write(indentation, "template<> void add<", cpp_full_name, ">(");
 	if(field_count > 0) {
-		ctx.write("const ", cpp_full_name, "& updated_component");
+		ctx.write("const ", cpp_full_name, "& new_component");
 	}
 	ctx.write(") {\n");
 	ctx.write(indentation, "\t_ctx.add<", cpp_full_name, ">(");
 	if(field_count > 0) {
+		ctx.write("new_component");
+	}
+	ctx.write(");\n");
+	ctx.write(indentation, "}\n");
+}
+
+static void write_context_update_specialize
+	( ecsact::codegen_plugin_context&  ctx
+	, ecsact_component_like_id         comp_id
+	, std::string_view                 indentation
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
+
+	std::string full_name = ecsact_meta_decl_full_name(decl_id);
+	std::string cpp_full_name = cpp_identifier(full_name);
+	auto field_count = ecsact_meta_count_fields(
+		ecsact_id_cast<ecsact_composite_id>(comp_id)
+	);
+
+	ctx.write(indentation, "template<> void update<", cpp_full_name, ">(");
+	if(field_count > 0) {
+		ctx.write("const ", cpp_full_name, "& updated_component");
+	}
+	ctx.write(") {\n");
+	ctx.write(indentation, "\t_ctx.update<", cpp_full_name, ">(");
+	if(field_count > 0) {
 		ctx.write("updated_component");
 	}
 	ctx.write(");\n");
+	ctx.write(indentation, "}\n");
+}
+
+static void write_context_remove_specialize
+	( ecsact::codegen_plugin_context&  ctx
+	, ecsact_component_like_id         comp_id
+	, std::string_view                 indentation
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
+	std::string full_name = ecsact_meta_decl_full_name(decl_id);
+	std::string cpp_full_name = cpp_identifier(full_name);
+
+	ctx.write(indentation, "template<> void remove<", cpp_full_name, ">() {\n");
+	ctx.write(indentation, "\treturn _ctx.remove<", cpp_full_name, ">();\n");
 	ctx.write(indentation, "}\n");
 }
 
@@ -199,8 +263,20 @@ void ecsact_codegen_plugin
 		if(!add_components.empty()) write_context_add_decl(ctx, "\t");
 		if(!remove_components.empty()) write_context_remove_decl(ctx, "\t");
 
+		for(auto get_comp_id : get_components) {
+			write_context_get_specialize(ctx, get_comp_id, "\t");
+		}
+
 		for(auto add_comp_id : add_components) {
 			write_context_add_specialize(ctx, add_comp_id, "\t");
+		}
+
+		for(auto update_comp_id : update_components) {
+			write_context_update_specialize(ctx, update_comp_id, "\t");
+		}
+
+		for(auto remove_comp_id : remove_components) {
+			write_context_remove_specialize(ctx, remove_comp_id, "\t");
 		}
 
 		ctx.write("};\n");
