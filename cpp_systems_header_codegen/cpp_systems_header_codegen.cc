@@ -13,11 +13,6 @@ namespace fs = std::filesystem;
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
-static bool has_parent_system(ecsact_system_id id) {
-	auto parent_id = ecsact_meta_get_parent_system_id(id);
-	return parent_id != (ecsact_system_like_id)-1;
-}
-
 static std::vector<ecsact_system_id> get_system_ids
 	( ecsact_package_id package_id
 	)
