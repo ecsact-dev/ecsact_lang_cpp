@@ -251,7 +251,38 @@ void ecsact_codegen_plugin
 			full_name += anonymous_system_name(sys_id);
 		}
 
+		using other_contexts_t = std::unordered_map<
+			ecsact_component_like_id,
+			std::unordered_map<
+				ecsact_field_id,
+				std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
+			>
+		>;
+		other_contexts_t other_contexts;
+
+		for(const auto& entry : ecsact::meta::system_capabilities(sys_id)) {
+			auto comp_id = entry.first;
+			auto associations = ecsact::meta::system_association_fields(
+				sys_id,
+				comp_id
+			);
+			for(auto field_id : associations) {
+				auto assoc_caps = ecsact::meta::system_association_capabilities(
+					sys_id,
+					comp_id,
+					field_id
+				);
+				for(auto&& [assoc_comp_id, assoc_cap] : assoc_caps) {
+					other_contexts[comp_id][field_id][assoc_comp_id] = assoc_cap;
+				}
+			}
+		}
+
 		ctx.write("\nstruct ", cpp_identifier(full_name), "::context {\n");
+		if(!other_contexts.empty()) {
+			ctx.write("\ttemplate<typename T>\n");
+			ctx.write("\tstruct other_contexts;\n\n");
+		}
 		ctx.write("\t[[no_unique_address]]\n");
 		ctx.write("\t::ecsact::execution_context _ctx;\n");
 
