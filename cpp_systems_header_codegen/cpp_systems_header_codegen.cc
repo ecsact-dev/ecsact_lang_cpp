@@ -68,6 +68,49 @@ static void write_context_remove_decl
 	ctx.write(indentation, "void remove();\n");
 }
 
+static void write_context_has_decl
+	( ecsact::codegen_plugin_context&  ctx
+	, std::string_view                 indentation
+	)
+{
+	ctx.write(indentation, "template<typename T>\n");
+	ctx.write(indentation, "bool has();\n");
+}
+
+template<typename SystemLikeID>
+static void write_context_generate_defn
+	( ecsact::codegen_plugin_context&  ctx
+	, SystemLikeID                     sys_id
+	, ecsact_system_generates_id       gen_id
+	, std::string_view                 indentation
+	)
+{
+	using ecsact::meta::get_system_generates_components;
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::decl_full_name;
+
+	ctx.write(indentation, "inline void generate(");
+
+	ctx.write_each(
+		", ",
+		get_system_generates_components(sys_id, gen_id),
+		[&](const auto& entry) {
+			ecsact_component_id comp_id = entry.first;
+			ecsact_system_generate flag = entry.second;
+			auto comp_full_name = decl_full_name(comp_id);
+			auto cpp_comp_full_name = cpp_identifier(comp_full_name);
+
+			if(flag == ECSACT_SYS_GEN_OPTIONAL) {
+				ctx.write(cpp_comp_full_name);
+			} else {
+				ctx.write(cpp_comp_full_name);
+			}
+		}
+	);
+
+	ctx.write(") {}\n");
+}
+
 static void write_context_get_specialize
 	( ecsact::codegen_plugin_context&  ctx
 	, ecsact_component_like_id         comp_id
@@ -173,6 +216,7 @@ void ecsact_codegen_plugin
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cc_lang_support::c_identifier;
 	using ecsact::cc_lang_support::anonymous_system_name;
+	using ecsact::meta::get_system_generates_ids;
 
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
@@ -212,6 +256,7 @@ void ecsact_codegen_plugin
 		ctx.write("\t::ecsact::execution_context _ctx;\n");
 
 		auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
+		auto parent_sys_like_id = ecsact::meta::get_parent_system_id(sys_id);
 		auto cap_count = ecsact_meta_system_capabilities_count(sys_like_id);
 
 		std::vector<ecsact_component_like_id> cap_comp_ids;
@@ -231,6 +276,8 @@ void ecsact_codegen_plugin
 		std::set<ecsact_component_like_id> get_components;
 		std::set<ecsact_component_like_id> update_components;
 		std::set<ecsact_component_like_id> remove_components;
+		std::set<ecsact_component_like_id> optional_components;
+		auto gen_ids = get_system_generates_ids(sys_like_id);
 
 		for(int i=0; cap_count > i; ++i) {
 			auto& comp_id = cap_comp_ids[i];
@@ -251,12 +298,31 @@ void ecsact_codegen_plugin
 			if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
 				remove_components.emplace(comp_id);
 			}
+
+			if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
+				optional_components.emplace(comp_id);
+			}
 		}
 
 		if(!get_components.empty()) write_context_get_decl(ctx, "\t");
 		if(!update_components.empty()) write_context_update_decl(ctx, "\t");
 		if(!add_components.empty()) write_context_add_decl(ctx, "\t");
 		if(!remove_components.empty()) write_context_remove_decl(ctx, "\t");
+		if(!optional_components.empty()) write_context_has_decl(ctx, "\t");
+
+		if(parent_sys_like_id) {
+			auto parent_full_name = ecsact::meta::decl_full_name(*parent_sys_like_id);
+			if(parent_full_name.empty()) {
+				parent_full_name += ecsact::meta::package_name(ctx.package_id) + ".";
+				parent_full_name += anonymous_system_name(*parent_sys_like_id);
+			}
+			auto parent_cpp_full_name = cpp_identifier(parent_full_name);
+			ctx.write(
+				"\tconst ", parent_cpp_full_name, "::context parent() const;\n"
+			);
+		}
+
+		ctx.write("\n\n");
 
 		for(auto get_comp_id : get_components) {
 			write_context_get_specialize(ctx, get_comp_id, "\t");
@@ -272,6 +338,10 @@ void ecsact_codegen_plugin
 
 		for(auto remove_comp_id : remove_components) {
 			write_context_remove_specialize(ctx, remove_comp_id, "\t");
+		}
+
+		for(auto gen_id : gen_ids) {
+			write_context_generate_defn(ctx, sys_id, gen_id, "\t");
 		}
 
 		ctx.write("};\n");
