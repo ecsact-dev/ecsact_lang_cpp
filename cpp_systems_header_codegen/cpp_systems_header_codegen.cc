@@ -77,40 +77,6 @@ static void write_context_has_decl
 	ctx.write(indentation, "bool has();\n");
 }
 
-template<typename SystemLikeID>
-static void write_context_generate_defn
-	( ecsact::codegen_plugin_context&  ctx
-	, SystemLikeID                     sys_id
-	, ecsact_system_generates_id       gen_id
-	, std::string_view                 indentation
-	)
-{
-	using ecsact::meta::get_system_generates_components;
-	using ecsact::cc_lang_support::cpp_identifier;
-	using ecsact::meta::decl_full_name;
-
-	ctx.write(indentation, "inline void generate(");
-
-	ctx.write_each(
-		", ",
-		get_system_generates_components(sys_id, gen_id),
-		[&](const auto& entry) {
-			ecsact_component_id comp_id = entry.first;
-			ecsact_system_generate flag = entry.second;
-			auto comp_full_name = decl_full_name(comp_id);
-			auto cpp_comp_full_name = cpp_identifier(comp_full_name);
-
-			if(flag == ECSACT_SYS_GEN_OPTIONAL) {
-				ctx.write(cpp_comp_full_name);
-			} else {
-				ctx.write(cpp_comp_full_name);
-			}
-		}
-	);
-
-	ctx.write(") {}\n");
-}
-
 static void write_context_get_specialize
 	( ecsact::codegen_plugin_context&  ctx
 	, ecsact_component_like_id         comp_id
@@ -369,10 +335,6 @@ void ecsact_codegen_plugin
 
 		for(auto remove_comp_id : remove_components) {
 			write_context_remove_specialize(ctx, remove_comp_id, "\t");
-		}
-
-		for(auto gen_id : gen_ids) {
-			write_context_generate_defn(ctx, sys_id, gen_id, "\t");
 		}
 
 		ctx.write("};\n");
