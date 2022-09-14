@@ -7,7 +7,7 @@ struct ecsact_system_execution_context;
 
 namespace ecsact {
 
-	class execution_context {
+	struct execution_context {
 		[[no_unique_address]]
 		ecsact_system_execution_context* const _ctx;
 
@@ -27,36 +27,58 @@ namespace ecsact {
 			requires (!std::is_empty_v<C>)
 		C get() const {
 			C comp;
-			ecsact_system_execution_context_get(_ctx, C::id, &comp);
+			ecsact_system_execution_context_get(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				&comp
+			);
 			return comp;
 		}
 
 		template<typename C>
 			requires (!std::is_empty_v<C>)
 		void update(const C& updated_component) {
-			ecsact_system_execution_context_update(_ctx, C::id, &updated_component);
+			ecsact_system_execution_context_update(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				&updated_component
+			);
 		}
 
 		template<typename C>
 		bool has() const {
-			return ecsact_system_execution_context_has(_ctx, C::id);
+			return ecsact_system_execution_context_has(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id)
+			);
 		}
 
 		template<typename C>
 			requires (!std::is_empty_v<C>)
 		void add(const C& new_component) {
-			ecsact_system_execution_context_add(_ctx, C::id, &new_component);
+			ecsact_system_execution_context_add(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				&new_component
+			);
 		}
 
 		template<typename C>
 			requires (std::is_empty_v<C>)
 		void add() {
-			ecsact_system_execution_context_add(_ctx, C::id, nullptr);
+			ecsact_system_execution_context_add(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				nullptr
+			);
 		}
 
 		template<typename C>
 		void remove() {
-			ecsact_system_execution_context_remove(_ctx, C::id);
+			ecsact_system_execution_context_remove(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id)
+			);
 		}
 
 		template<typename... C>
@@ -87,7 +109,7 @@ namespace ecsact {
 			return ecsact_system_execution_context_same(_ctx, other._ctx);
 		}
 
-		exeuction_context other(ecsact_entity_id entity) {
+		execution_context other(ecsact_entity_id entity) {
 			return execution_context{
 				ecsact_system_execution_context_other(_ctx, entity)
 			};
