@@ -56,11 +56,60 @@ static void write_system_execution_order
 	ctx.write(">>");
 }
 
+
+static void for_each_applicable_comps_map(auto& maps, auto cap, auto&& cb) {
+	if((cap & ECSACT_SYS_CAP_READWRITE) == ECSACT_SYS_CAP_READWRITE) {
+		cb(maps.readwrite_comps);
+	} else
+	if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
+		cb(maps.readonly_comps);
+	} else
+	if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
+		cb(maps.writeonly_comps);
+	}
+
+	if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
+		cb(maps.optional_comps);
+	}
+
+	if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
+		cb(maps.removes_comps);
+	}
+
+	if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
+		cb(maps.adds_comps);
+	}
+
+	if((cap & ECSACT_SYS_CAP_INCLUDE) == ECSACT_SYS_CAP_INCLUDE) {
+		cb(maps.include_comps);
+	}
+
+	if((cap & ECSACT_SYS_CAP_EXCLUDE) == ECSACT_SYS_CAP_EXCLUDE) {
+		cb(maps.exclude_comps);
+	}
+}
+
+struct assoc_comp_maps {
+	using assoc_comp_map_t = std::map
+		< ecsact_component_like_id
+		, std::map<ecsact_field_id, std::vector<ecsact_component_like_id>>
+		>;
+	assoc_comp_map_t readwrite_comps;
+	assoc_comp_map_t readonly_comps;
+	assoc_comp_map_t writeonly_comps;
+	assoc_comp_map_t optional_comps;
+	assoc_comp_map_t adds_comps;
+	assoc_comp_map_t removes_comps;
+	assoc_comp_map_t include_comps;
+	assoc_comp_map_t exclude_comps;
+};
+
 struct system_comp_maps {
 	using system_comps_map_t = std::map
 		< ecsact_system_like_id
 		, std::vector<ecsact_component_like_id>
 		>;
+	using assoc_comp_map_t = typename assoc_comp_maps::assoc_comp_map_t;
 	system_comps_map_t readwrite_comps;
 	system_comps_map_t readonly_comps;
 	system_comps_map_t writeonly_comps;
@@ -69,38 +118,7 @@ struct system_comp_maps {
 	system_comps_map_t removes_comps;
 	system_comps_map_t include_comps;
 	system_comps_map_t exclude_comps;
-
-	void for_each_applicable_comps_map(auto cap, auto&& cb) {
-		if((cap & ECSACT_SYS_CAP_READWRITE) == ECSACT_SYS_CAP_READWRITE) {
-			cb(readwrite_comps);
-		} else
-		if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
-			cb(readonly_comps);
-		} else
-		if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
-			cb(writeonly_comps);
-		}
-
-		if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
-			cb(optional_comps);
-		}
-
-		if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
-			cb(removes_comps);
-		}
-
-		if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
-			cb(adds_comps);
-		}
-
-		if((cap & ECSACT_SYS_CAP_INCLUDE) == ECSACT_SYS_CAP_INCLUDE) {
-			cb(include_comps);
-		}
-
-		if((cap & ECSACT_SYS_CAP_EXCLUDE) == ECSACT_SYS_CAP_EXCLUDE) {
-			cb(exclude_comps);
-		}
-	}
+	assoc_comp_maps assoc_comp_maps;
 
 	template<typename SystemLikeID>
 	void set_comp_maps(SystemLikeID id) {
@@ -109,9 +127,34 @@ struct system_comp_maps {
 			auto comp = entry.first;
 			auto cap = entry.second;
 
-			for_each_applicable_comps_map(cap, [&](system_comps_map_t& map) {
+			for_each_applicable_comps_map(*this, cap, [&](system_comps_map_t& map) {
 				map[sys_like_id].push_back(comp);
 			});
+
+			auto assoc_fields = ecsact::meta::system_association_fields(
+				sys_like_id,
+				comp
+			);
+
+			for(auto& field_id : assoc_fields) {
+				auto other_caps = ecsact::meta::system_association_capabilities(
+					sys_like_id,
+					comp,
+					field_id
+				);
+
+				for(auto& other_entry : other_caps) {
+					auto other_comp = other_entry.first;
+					auto other_cap = other_entry.second;
+					for_each_applicable_comps_map(
+						assoc_comp_maps,
+						other_cap,
+						[&](assoc_comp_map_t& map) {
+							map[comp][field_id].push_back(other_comp);
+						}
+					);
+				}
+			}
 		}
 
 		for(auto child : ecsact::meta::get_child_system_ids(id)) {
@@ -184,6 +227,7 @@ void ecsact_codegen_plugin
 	ctx.write("\n");
 
 	auto pkg_name = ecsact::meta::package_name(ctx.package_id);
+	auto top_level_systems = get_top_level_systems(ctx.package_id);
 	const auto namespace_str = cpp_identifier(pkg_name);
 
 	ctx.write("namespace "s, namespace_str, " {\n\n"s);
@@ -258,7 +302,7 @@ void ecsact_codegen_plugin
 	ctx.write("using execution_order = ::ecsact::mp_list<\n\t");
 	ctx.write_each(
 		",\n\t",
-		get_top_level_systems(ctx.package_id),
+		top_level_systems,
 		[&](ecsact_system_like_id sys_like_id) {
 			write_system_execution_order(ctx, sys_like_id);
 		}
@@ -267,7 +311,7 @@ void ecsact_codegen_plugin
 
 	{
 		system_comp_maps comp_maps;
-		for(auto sys_like_id : get_top_level_systems(ctx.package_id)) {
+		for(auto sys_like_id : top_level_systems) {
 			comp_maps.set_comp_maps(sys_like_id);
 		}
 
