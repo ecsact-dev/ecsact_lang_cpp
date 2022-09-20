@@ -101,3 +101,5 @@ The header contains a single struct named `package` inside the namespace that ma
     };
   }
   ```
+
+  * TODO(@zaucy): document the rest
