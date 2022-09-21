@@ -89,27 +89,18 @@ static void for_each_applicable_comps_map(auto& maps, auto cap, auto&& cb) {
 	}
 }
 
-struct assoc_comp_maps {
-	using assoc_comp_map_t = std::map
-		< ecsact_component_like_id
-		, std::map<ecsact_field_id, std::vector<ecsact_component_like_id>>
-		>;
-	assoc_comp_map_t readwrite_comps;
-	assoc_comp_map_t readonly_comps;
-	assoc_comp_map_t writeonly_comps;
-	assoc_comp_map_t optional_comps;
-	assoc_comp_map_t adds_comps;
-	assoc_comp_map_t removes_comps;
-	assoc_comp_map_t include_comps;
-	assoc_comp_map_t exclude_comps;
-};
-
 struct system_comp_maps {
 	using system_comps_map_t = std::map
 		< ecsact_system_like_id
 		, std::vector<ecsact_component_like_id>
 		>;
-	using assoc_comp_map_t = typename assoc_comp_maps::assoc_comp_map_t;
+	using sys_assoc_comp_maps_t = std::map<
+		ecsact_system_like_id,
+		std::map<
+			ecsact_component_like_id,
+			std::map<ecsact_field_id, std::vector<ecsact_component_like_id>>
+		>
+	>;
 	system_comps_map_t readwrite_comps;
 	system_comps_map_t readonly_comps;
 	system_comps_map_t writeonly_comps;
@@ -118,7 +109,15 @@ struct system_comp_maps {
 	system_comps_map_t removes_comps;
 	system_comps_map_t include_comps;
 	system_comps_map_t exclude_comps;
-	assoc_comp_maps assoc_comp_maps;
+
+	sys_assoc_comp_maps_t readwrite_assoc_comps;
+	sys_assoc_comp_maps_t readonly_assoc_comps;
+	sys_assoc_comp_maps_t writeonly_assoc_comps;
+	sys_assoc_comp_maps_t optional_assoc_comps;
+	sys_assoc_comp_maps_t adds_assoc_comps;
+	sys_assoc_comp_maps_t removes_assoc_comps;
+	sys_assoc_comp_maps_t include_assoc_comps;
+	sys_assoc_comp_maps_t exclude_assoc_comps;
 
 	template<typename SystemLikeID>
 	void set_comp_maps(SystemLikeID id) {
@@ -146,13 +145,7 @@ struct system_comp_maps {
 				for(auto& other_entry : other_caps) {
 					auto other_comp = other_entry.first;
 					auto other_cap = other_entry.second;
-					for_each_applicable_comps_map(
-						assoc_comp_maps,
-						other_cap,
-						[&](assoc_comp_map_t& map) {
-							map[comp][field_id].push_back(other_comp);
-						}
-					);
+					// TODO
 				}
 			}
 		}
@@ -162,6 +155,145 @@ struct system_comp_maps {
 		}
 	}
 };
+
+static void write_system_capabilities_info_struct
+	( ecsact::codegen_plugin_context&  ctx
+	, auto                             id
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::get_system_generates_components;
+
+	auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	auto full_name = get_sys_full_name(ctx.package_id, sys_like_id);
+	auto cpp_full_name = cpp_identifier(full_name);
+
+	ctx.write("\ntemplate<>\n");
+	ctx.write("struct ecsact::system_capabilities_info<", cpp_full_name, "> {");
+	++ctx.indentation;
+	ctx.write("\n");
+
+	std::vector<ecsact_component_like_id> readwrite_comps;
+	std::vector<ecsact_component_like_id> readonly_comps;
+	std::vector<ecsact_component_like_id> writeonly_comps;
+	std::vector<ecsact_component_like_id> optional_comps;
+	std::vector<ecsact_component_like_id> adds_comps;
+	std::vector<ecsact_component_like_id> removes_comps;
+	std::vector<ecsact_component_like_id> include_comps;
+	std::vector<ecsact_component_like_id> exclude_comps;
+
+	for(auto& entry : ecsact::meta::system_capabilities(sys_like_id)) {
+		auto comp = entry.first;
+		auto cap = entry.second;
+
+		if((cap & ECSACT_SYS_CAP_READWRITE) == ECSACT_SYS_CAP_READWRITE) {
+			readwrite_comps.push_back(comp);
+		} else
+		if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
+			readonly_comps.push_back(comp);
+		} else
+		if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
+			writeonly_comps.push_back(comp);
+		}
+
+		if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
+			optional_comps.push_back(comp);
+		}
+
+		if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
+			removes_comps.push_back(comp);
+		}
+
+		if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
+			adds_comps.push_back(comp);
+		}
+
+		if((cap & ECSACT_SYS_CAP_INCLUDE) == ECSACT_SYS_CAP_INCLUDE) {
+			include_comps.push_back(comp);
+		}
+
+		if((cap & ECSACT_SYS_CAP_EXCLUDE) == ECSACT_SYS_CAP_EXCLUDE) {
+			exclude_comps.push_back(comp);
+		}
+	}
+
+	auto write_comp_full_name = [&](ecsact_component_like_id comp_id) {
+		auto full_name = ecsact::meta::decl_full_name(comp_id);
+		auto cpp_full_name = cpp_identifier(full_name);
+		ctx.write(cpp_full_name);
+	};
+
+	ctx.write("using readonly_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", readonly_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using readwrite_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", readwrite_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using writeonly_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", writeonly_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using optional_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", optional_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using adds_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", adds_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using removes_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", removes_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using include_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", include_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using exclude_components = mp_list<\n\t");
+	ctx.write_each(",\n\t", exclude_comps, write_comp_full_name);
+	ctx.write("\n>;\n");
+
+	ctx.write("using generates = mp_list<\n\t");
+	ctx.write_each(
+		",\n\t",
+		ecsact::meta::get_system_generates_ids(sys_like_id),
+		[&](ecsact_system_generates_id gen_id) {
+			auto generates_comps = get_system_generates_components(
+				sys_like_id,
+				gen_id
+			);
+
+			ctx.write("mp_list<\n\t\t");
+			++ctx.indentation;
+			ctx.write_each(
+				",\n\t",
+				generates_comps,
+				[&](auto& entry) {
+					auto comp_full_name = ecsact::meta::decl_full_name(entry.first);
+					switch(entry.second) {
+						case ECSACT_SYS_GEN_REQUIRED:
+							ctx.write("entity_component_required");
+							break;
+						case ECSACT_SYS_GEN_OPTIONAL:
+							ctx.write("entity_component_optional");
+							break;
+					}
+					ctx.write("<", cpp_identifier(comp_full_name), ">");
+				}
+			);
+			--ctx.indentation;
+			ctx.write("\n\t>");
+		}
+	);
+
+	ctx.write("\n>;\n");
+	ctx.write("using associations = mp_list<>;\n");
+
+	--ctx.indentation;
+	ctx.write("\n};\n");
+}
 
 static void write_system_comps_map_using
 	( ecsact::codegen_plugin_context&              ctx
@@ -194,6 +326,19 @@ static void write_system_comps_map_using
 	ctx.write("\n>;\n");
 }
 
+static void write_system_assoc_comps_map_using
+	( ecsact::codegen_plugin_context&                 ctx
+	, std::string_view                                alias_name
+	, const system_comp_maps::sys_assoc_comp_maps_t&  maps
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	ctx.write("using ", alias_name, " = ::ecsact::mp_list<\n\t");
+	
+	ctx.write("\n>;\n");
+}
+
 const char* ecsact_codegen_plugin_name() {
 	return "meta.hh";
 }
@@ -222,6 +367,7 @@ void ecsact_codegen_plugin
 	ctx.write("#include <cstdint>\n");
 	ctx.write("#include <compare>\n");
 	ctx.write("#include \"ecsact/runtime/common.h\"\n");
+	ctx.write("#include \"ecsact/cpp/type_info.hh\"\n");
 	ctx.write("#include \"ecsact/lib.hh\"\n");
 	ctx.write("#include \"", package_hh_path.filename().string(), "\"\n");
 	ctx.write("\n");
@@ -309,54 +455,6 @@ void ecsact_codegen_plugin
 	);
 	ctx.write("\n>;\n");
 
-	{
-		system_comp_maps comp_maps;
-		for(auto sys_like_id : top_level_systems) {
-			comp_maps.set_comp_maps(sys_like_id);
-		}
-
-		write_system_comps_map_using(
-			ctx,
-			"system_readonly_components",
-			comp_maps.readonly_comps
-		);
-		write_system_comps_map_using(
-			ctx,
-			"system_readwrite_components",
-			comp_maps.readwrite_comps
-		);
-		write_system_comps_map_using(
-			ctx,
-			"system_writeonly_components",
-			comp_maps.writeonly_comps
-		);
-		write_system_comps_map_using(
-			ctx,
-			"system_optional_components",
-			comp_maps.optional_comps
-		);
-		write_system_comps_map_using(
-			ctx,
-			"system_adds_components",
-			comp_maps.adds_comps
-		);
-		write_system_comps_map_using(
-			ctx,
-			"system_removes_components",
-			comp_maps.removes_comps
-		);
-		write_system_comps_map_using(
-			ctx,
-			"system_include_components",
-			comp_maps.include_comps
-		);
-		write_system_comps_map_using(
-			ctx,
-			"system_exclude_components",
-			comp_maps.exclude_comps
-		);
-	}
-
 	ctx.write("using generates = ::ecsact::mp_list<\n\t");
 	ctx.write_each(
 		",\n\t",
@@ -405,4 +503,12 @@ void ecsact_codegen_plugin
 	ctx.write("\n};\n");
 
 	ctx.write("\n}// namespace "s, namespace_str, "\n"s);
+
+	for(auto& sys_id : ecsact::meta::get_system_ids(ctx.package_id)) {
+		write_system_capabilities_info_struct(ctx, sys_id);
+	}
+
+	for(auto& act_id : ecsact::meta::get_action_ids(ctx.package_id)) {
+		write_system_capabilities_info_struct(ctx, act_id);
+	}
 }
