@@ -1,7 +1,10 @@
 #pragma once
 
+#include <cstdint>
 #include <type_traits>
 #include "ecsact/lib.hh"
+#include "ecsact/runtime/common.h"
+#include "ecsact/runtime/definitions.h"
 
 namespace ecsact {
 	template<typename SystemLikeT>
@@ -32,4 +35,38 @@ namespace ecsact {
 		using generates = mp_list<>;
 		using associations = mp_list<>;
 	};
+
+	template<typename CompositeT>
+	constexpr std::size_t fields_count = 0;
+
+	struct field_info {
+		/**
+		 * Offset in component layout. Same as `offsetof(Component, field)`.
+		 */
+		std::size_t offset;
+
+		/**
+		 * The field storage type. In the builtin type fields this is the actual
+		 * field type, but in the enum case it's the underlying type (storage type.)
+		 */
+		ecsact_builtin_type storage_type;
+
+		/**
+		 * @see`ecsact_field_type::length`
+		 */
+		std::size_t length;
+
+		template<typename FieldType>
+		constexpr auto get(const auto& component) {
+			return *reinterpret_cast<const FieldType*>(
+				reinterpret_cast<const void*>(&component) + offset
+			);
+		}
+	};
+
+	/**
+	 * @returns std::array of `field_info` instances
+	 */
+	template<typename C>
+	constexpr std::array<field_info, fields_count<C>> fields_info();
 }

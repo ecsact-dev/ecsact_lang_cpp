@@ -29,3 +29,8 @@ cc_library(
         "@ecsact_runtime//:definitions",
     ],
 )
+
+filegroup(
+    name = "headers",
+    srcs = glob(["ecsact/**/*.hh"]),
+)
