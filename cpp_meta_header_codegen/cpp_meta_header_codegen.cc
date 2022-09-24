@@ -267,13 +267,21 @@ static void write_system_capabilities_info_struct
 		auto comp_full_name = ecsact::meta::decl_full_name(comp);
 		auto comp_cpp_full_name = cpp_identifier(comp_full_name);
 		std::string field_name = ecsact_meta_field_name(compo_id, field_id);
+		auto field_offset = ecsact_meta_field_offset(compo_id, field_id);
 
 		ctx.write("template<>\n");
 		ctx.write("struct association<", comp_cpp_full_name, ", ");
-		ctx.write(ecsact_meta_field_offset(compo_id, field_id));
+		ctx.write(field_offset);
 		ctx.write(" /* ", field_name, " */> {");
 		++ctx.indentation;
 		ctx.write("\n");
+
+		ctx.write("using component_type = ", comp_cpp_full_name, ";\n");
+		ctx.write(
+			"static constexpr std::size_t field_offset = ",
+			field_offset,
+			";\n"
+		);
 
 		auto assoc_caps = ecsact::meta::system_association_capabilities(
 			sys_like_id,

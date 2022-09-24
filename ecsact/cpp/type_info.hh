@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <array>
 #include "ecsact/lib.hh"
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/definitions.h"
@@ -57,9 +58,9 @@ namespace ecsact {
 		std::size_t length;
 
 		template<typename FieldType>
-		constexpr auto get(const auto& component) {
+		constexpr auto get(const auto& component) const noexcept {
 			return *reinterpret_cast<const FieldType*>(
-				reinterpret_cast<const void*>(&component) + offset
+				reinterpret_cast<const char*>(&component) + offset
 			);
 		}
 	};
