@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <vector>
 #include "ecsact/runtime/dynamic.h"
 
 struct ecsact_system_execution_context;
