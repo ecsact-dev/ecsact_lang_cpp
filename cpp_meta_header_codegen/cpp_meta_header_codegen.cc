@@ -328,6 +328,9 @@ static void write_system_capabilities_info_struct
 		ctx.write_each(",\n\t", assoc_cap_comps.exclude_comps, write_comp_full_name);
 		ctx.write("\n>;\n");
 
+		// TODO(zaucy): Recursively support associations
+		ctx.write("using associations = mp_list<>;\n\t");
+
 		--ctx.indentation;
 		ctx.write("\n};\n");
 	}
