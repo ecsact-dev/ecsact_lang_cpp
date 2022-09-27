@@ -13,22 +13,6 @@ namespace fs = std::filesystem;
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
-static std::vector<ecsact_system_id> get_system_ids
-	( ecsact_package_id package_id
-	)
-{
-	std::vector<ecsact_system_id> system_ids;
-	system_ids.resize(ecsact_meta_count_systems(package_id));
-	ecsact_meta_get_system_ids(
-		package_id,
-		static_cast<int32_t>(system_ids.size()),
-		system_ids.data(),
-		nullptr
-	);
-
-	return system_ids;
-}
-
 static void write_context_get_decl
 	( ecsact::codegen_plugin_context&  ctx
 	, std::string_view                 indentation
@@ -183,6 +167,9 @@ void ecsact_codegen_plugin
 	using ecsact::cc_lang_support::c_identifier;
 	using ecsact::cc_lang_support::anonymous_system_name;
 	using ecsact::meta::get_system_generates_ids;
+	using ecsact::meta::get_all_system_like_ids;
+	using ecsact::meta::get_system_ids;
+	using ecsact::meta::get_action_ids;
 
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
@@ -205,16 +192,20 @@ void ecsact_codegen_plugin
 
 	ctx.write("\nstruct ecsact_system_execution_context;\n");
 
-	auto system_ids = get_system_ids(ctx.package_id);
-
-	for(auto sys_id : system_ids) {
+	auto write_sys_context = [&]<typename ID>(ID id) {
+		constexpr bool is_action = std::is_same_v<ecsact_action_id, ID>;
+		auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
 		std::string full_name = ecsact_meta_decl_full_name(
-			ecsact_id_cast<ecsact_decl_id>(sys_id)
+			ecsact_id_cast<ecsact_decl_id>(id)
 		);
 
-		if(full_name.empty()) {
-			full_name += ecsact::meta::package_name(ctx.package_id) + ".";
-			full_name += anonymous_system_name(sys_id);
+		if constexpr(!is_action) {
+			if(full_name.empty()) {
+				full_name += ecsact::meta::package_name(ctx.package_id) + ".";
+				full_name += anonymous_system_name(id);
+			}
+		} else {
+			assert(!full_name.empty());
 		}
 
 		using other_contexts_t = std::unordered_map<
@@ -226,15 +217,15 @@ void ecsact_codegen_plugin
 		>;
 		other_contexts_t other_contexts;
 
-		for(const auto& entry : ecsact::meta::system_capabilities(sys_id)) {
+		for(const auto& entry : ecsact::meta::system_capabilities(sys_like_id)) {
 			auto comp_id = entry.first;
 			auto associations = ecsact::meta::system_association_fields(
-				sys_id,
+				sys_like_id,
 				comp_id
 			);
 			for(auto field_id : associations) {
 				auto assoc_caps = ecsact::meta::system_association_capabilities(
-					sys_id,
+					sys_like_id,
 					comp_id,
 					field_id
 				);
@@ -252,8 +243,10 @@ void ecsact_codegen_plugin
 		ctx.write("\t[[no_unique_address]]\n");
 		ctx.write("\t::ecsact::execution_context _ctx;\n");
 
-		auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
-		auto parent_sys_like_id = ecsact::meta::get_parent_system_id(sys_id);
+		std::optional<ecsact_system_like_id> parent_sys_like_id;
+		if constexpr(!is_action) {
+			parent_sys_like_id = ecsact::meta::get_parent_system_id(id);
+		}
 		auto cap_count = ecsact_meta_system_capabilities_count(sys_like_id);
 
 		std::vector<ecsact_component_like_id> cap_comp_ids;
@@ -338,11 +331,19 @@ void ecsact_codegen_plugin
 		}
 
 		ctx.write("};\n");
+	};
+
+	for(auto sys_id : get_system_ids(ctx.package_id)) {
+		write_sys_context(sys_id);
 	}
 
-	for(auto sys_id : system_ids) {
+	for(auto act_id : get_action_ids(ctx.package_id)) {
+		write_sys_context(act_id);
+	}
+
+	for(auto sys_like_id : get_all_system_like_ids(ctx.package_id)) {
 		std::string full_name = ecsact_meta_decl_full_name(
-			ecsact_id_cast<ecsact_decl_id>(sys_id)
+			ecsact_id_cast<ecsact_decl_id>(sys_like_id)
 		);
 
 		if(full_name.empty()) {
