@@ -1,0 +1,19 @@
+load("//bazel:copts.bzl", "copts")
+load("@ecsact_runtime//:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_ecsact_codegen_plugin(
+    name = "ecsact_cpp_systems_source_codegen",
+    srcs = ["cpp_systems_source_codegen.cc"],
+    copts = copts,
+    no_validate_test = True,  # file name is too long on Windows
+    deps = ["//:support"],
+)
+
+filegroup(
+    name = "cpp_systems_source_codegen",
+    srcs = [
+        ":ecsact_cpp_systems_source_codegen",
+    ],
+)
