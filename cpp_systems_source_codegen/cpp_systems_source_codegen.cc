@@ -25,7 +25,6 @@ void ecsact_codegen_plugin
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
-	ctx.write("#pragma once\n\n");
 
 	fs::path package_systems_hh_path = ecsact_meta_package_file_path(package_id);
 	package_systems_hh_path.replace_extension(
