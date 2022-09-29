@@ -61,6 +61,22 @@ static void write_context_has_decl
 	ctx.write(indentation, "bool has();\n");
 }
 
+static void write_context_action
+	( ecsact::codegen_plugin_context&  ctx
+	, ecsact_action_id                 act_id
+	, std::string_view                 indentation
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	std::string full_name = ecsact::meta::decl_full_name(act_id);
+	std::string cpp_full_name = cpp_identifier(full_name);
+
+	ctx.write(indentation, cpp_full_name, " action() const {\n");
+	ctx.write(indentation, "\treturn _ctx.action<", cpp_full_name, ">();\n");
+	ctx.write(indentation, "}\n");
+}
+
 static void write_context_get_specialize
 	( ecsact::codegen_plugin_context&  ctx
 	, ecsact_component_like_id         comp_id
@@ -192,7 +208,7 @@ void ecsact_codegen_plugin
 
 	ctx.write("\nstruct ecsact_system_execution_context;\n");
 
-	auto write_sys_context = [&]<typename ID>(ID id) {
+	auto write_sys_context = [&]<typename ID>(ID id, auto&& extra_body_fn) {
 		constexpr bool is_action = std::is_same_v<ecsact_action_id, ID>;
 		auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
 		std::string full_name = ecsact_meta_decl_full_name(
@@ -329,16 +345,18 @@ void ecsact_codegen_plugin
 		for(auto remove_comp_id : remove_components) {
 			write_context_remove_specialize(ctx, remove_comp_id, "\t");
 		}
+		
+		extra_body_fn();
 
 		ctx.write("};\n");
 	};
 
 	for(auto sys_id : get_system_ids(ctx.package_id)) {
-		write_sys_context(sys_id);
+		write_sys_context(sys_id, []{});
 	}
 
 	for(auto act_id : get_action_ids(ctx.package_id)) {
-		write_sys_context(act_id);
+		write_sys_context(act_id, [&]{ write_context_action(ctx, act_id, "\t"); });
 	}
 
 	for(auto sys_like_id : get_all_system_like_ids(ctx.package_id)) {

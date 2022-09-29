@@ -24,6 +24,13 @@ namespace ecsact {
 			};
 		}
 
+		template<typename A>
+		A action() const {
+			A action;
+			ecsact_system_execution_context_action(_ctx, &action);
+			return action;
+		}
+
 		template<typename C>
 			requires (!std::is_empty_v<C>)
 		C get() const {
