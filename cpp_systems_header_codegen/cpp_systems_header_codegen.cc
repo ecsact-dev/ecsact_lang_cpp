@@ -77,6 +77,23 @@ static void write_context_action
 	ctx.write(indentation, "}\n");
 }
 
+template<typename SystemLikeID>
+static void write_context_entity
+	( ecsact::codegen_plugin_context&  ctx
+	, SystemLikeID                     id
+	, std::string_view                 indentation
+	)
+{
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	std::string full_name = ecsact::meta::decl_full_name(id);
+	std::string cpp_full_name = cpp_identifier(full_name);
+
+	ctx.write(indentation, "ecsact_entity_id entity() const {\n");
+	ctx.write(indentation, "\treturn _ctx.entity();\n");
+	ctx.write(indentation, "}\n");
+}
+
 static void write_context_get_specialize
 	( ecsact::codegen_plugin_context&  ctx
 	, ecsact_component_like_id         comp_id
@@ -344,6 +361,8 @@ void ecsact_codegen_plugin
 		for(auto remove_comp_id : remove_components) {
 			write_context_remove_specialize(ctx, remove_comp_id, "\t");
 		}
+
+		write_context_entity(ctx, sys_like_id, "\t");
 		
 		extra_body_fn();
 
