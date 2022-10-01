@@ -126,6 +126,10 @@ namespace ecsact {
 		ecsact_system_like_id id() const {
 			return ecsact_system_execution_context_id(_ctx);
 		}
+
+		ecsact_entity_id entity() const {
+			return ecsact_system_execution_context_entity(_ctx);
+		}
 	};
 
 }
