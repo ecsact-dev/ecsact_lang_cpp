@@ -72,8 +72,18 @@ static void write_fields
 	for(auto field_id : get_field_ids(compo_id)) {
 		auto field_type = ecsact_meta_field_type(compo_id, field_id);
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
-		assert(field_type.kind == ECSACT_TYPE_KIND_BUILTIN);
-		ctx.write(indentation, cpp_type_str(field_type.type.builtin), " "s, field_name);
+
+		ctx.write(indentation);
+		switch(field_type.kind) {
+			case ECSACT_TYPE_KIND_BUILTIN:
+				ctx.write(cpp_type_str(field_type.type.builtin));
+				break;
+			case ECSACT_TYPE_KIND_ENUM:
+				ctx.write(ecsact_meta_enum_name(field_type.type.enum_id));
+				break;
+		}
+		ctx.write(" "s, field_name);
+
 		if(field_type.length > 1) {
 			ctx.write("[", field_type.length, "]");
 		}
@@ -140,6 +150,8 @@ void ecsact_codegen_plugin
 	using ecsact::cc_lang_support::cpp_identifier;
 	using namespace std::string_literals;
 	using ecsact::meta::get_component_ids;
+	using ecsact::meta::get_enum_ids;
+	using ecsact::meta::get_enum_values;
 	using ecsact::meta::get_transient_ids;
 	using ecsact::meta::get_system_ids;
 	using ecsact::meta::get_child_system_ids;
@@ -159,6 +171,18 @@ void ecsact_codegen_plugin
 		cpp_identifier(ecsact_meta_package_name(ctx.package_id));
 
 	ctx.write("namespace "s, namespace_str, " {\n\n"s);
+
+	for(auto enum_id : get_enum_ids(ctx.package_id)) {
+		ctx.write("enum class "s, ecsact_meta_enum_name(enum_id), "{");
+		++ctx.indentation;
+		ctx.write("\n");
+		
+		for(auto& enum_value : get_enum_values(enum_id)) {
+			ctx.write(enum_value.name, " = ", enum_value.value, ",\n");
+		}
+		ctx.write("};");
+		--ctx.indentation;
+	}
 
 	for(auto comp_id : get_component_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
