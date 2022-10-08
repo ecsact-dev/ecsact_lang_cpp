@@ -1,7 +1,6 @@
 #pragma once
 
 #include <type_traits>
-#include <vector>
 #include "ecsact/runtime/dynamic.h"
 
 struct ecsact_system_execution_context;
@@ -91,19 +90,14 @@ namespace ecsact {
 
 		template<typename... C>
 		void generate(C&&... components) {
-			std::vector<ecsact_component_id> component_ids;
-			std::vector<const void*> components_data;
-			component_ids.reserve(sizeof...(C));
-			components_data.reserve(sizeof...(C));
-
-			(component_ids.push_back(C::id), ...);
-			(components_data.push_back(&components), ...);
+			ecsact_component_id component_ids[]{C::id...};
+			const void* components_data[]{&components...};
 
 			ecsact_system_execution_context_generate(
 				_ctx,
 				sizeof...(C),
-				component_ids.data(),
-				components_data.data()
+				component_ids,
+				components_data
 			);
 		}
 
