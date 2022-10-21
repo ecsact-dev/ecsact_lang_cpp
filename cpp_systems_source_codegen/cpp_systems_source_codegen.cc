@@ -14,13 +14,12 @@ const char* ecsact_codegen_plugin_name() {
 	return "systems.cc";
 }
 
-void ecsact_codegen_plugin
-  ( ecsact_package_id          package_id
-  , ecsact_codegen_write_fn_t  write_fn
-  )
-{
-	using ecsact::cc_lang_support::cpp_identifier;
+void ecsact_codegen_plugin(
+	ecsact_package_id         package_id,
+	ecsact_codegen_write_fn_t write_fn
+) {
 	using ecsact::cc_lang_support::c_identifier;
+	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::get_all_system_like_ids;
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
@@ -34,9 +33,8 @@ void ecsact_codegen_plugin
 	ctx.write("#include \"", package_systems_hh_path.filename().string(), "\"\n");
 
 	for(auto sys_like_id : get_all_system_like_ids(ctx.package_id)) {
-		std::string full_name = ecsact_meta_decl_full_name(
-			ecsact_id_cast<ecsact_decl_id>(sys_like_id)
-		);
+		std::string full_name =
+			ecsact_meta_decl_full_name(ecsact_id_cast<ecsact_decl_id>(sys_like_id));
 
 		if(full_name.empty()) {
 			continue;
