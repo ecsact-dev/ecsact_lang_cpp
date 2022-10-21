@@ -16,29 +16,34 @@ namespace stdr = std::ranges;
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
-static auto field_builtin_type_enum_name
-	( ecsact_builtin_type type
-	)
-{
+static auto field_builtin_type_enum_name(ecsact_builtin_type type) {
 	switch(type) {
-		case ECSACT_BOOL: return "ECSACT_BOOL";
-		case ECSACT_I8: return "ECSACT_I8";
-		case ECSACT_U8: return "ECSACT_U8";
-		case ECSACT_I16: return "ECSACT_I16";
-		case ECSACT_U16: return "ECSACT_U16";
-		case ECSACT_I32: return "ECSACT_I32";
-		case ECSACT_U32: return "ECSACT_U32";
-		case ECSACT_F32: return "ECSACT_F32";
-		case ECSACT_ENTITY_TYPE: return "ECSACT_ENTITY_TYPE";
+		case ECSACT_BOOL:
+			return "ECSACT_BOOL";
+		case ECSACT_I8:
+			return "ECSACT_I8";
+		case ECSACT_U8:
+			return "ECSACT_U8";
+		case ECSACT_I16:
+			return "ECSACT_I16";
+		case ECSACT_U16:
+			return "ECSACT_U16";
+		case ECSACT_I32:
+			return "ECSACT_I32";
+		case ECSACT_U32:
+			return "ECSACT_U32";
+		case ECSACT_F32:
+			return "ECSACT_F32";
+		case ECSACT_ENTITY_TYPE:
+			return "ECSACT_ENTITY_TYPE";
 	}
 }
 
 template<typename SystemLikeID>
-static std::string get_sys_full_name
-	( ecsact_package_id  package_id
-	, SystemLikeID       id
-	)
-{
+static std::string get_sys_full_name(
+	ecsact_package_id package_id,
+	SystemLikeID      id
+) {
 	using ecsact::cc_lang_support::anonymous_system_name;
 
 	auto full_name = ecsact::meta::decl_full_name(id);
@@ -51,11 +56,10 @@ static std::string get_sys_full_name
 }
 
 template<typename SystemLikeID>
-static void write_system_execution_order
-	( ecsact::codegen_plugin_context&  ctx
-	, SystemLikeID                     sys_id
-	)
-{
+static void write_system_execution_order(
+	ecsact::codegen_plugin_context& ctx,
+	SystemLikeID                    sys_id
+) {
 	using ecsact::cc_lang_support::cpp_identifier;
 
 	auto full_name = get_sys_full_name(ctx.package_id, sys_id);
@@ -73,15 +77,12 @@ static void write_system_execution_order
 	ctx.write(">>");
 }
 
-
 static void for_each_applicable_comps_map(auto& maps, auto cap, auto&& cb) {
 	if((cap & ECSACT_SYS_CAP_READWRITE) == ECSACT_SYS_CAP_READWRITE) {
 		cb(maps.readwrite_comps);
-	} else
-	if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
+	} else if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
 		cb(maps.readonly_comps);
-	} else
-	if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
+	} else if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
 		cb(maps.writeonly_comps);
 	}
 
@@ -116,18 +117,15 @@ struct system_capability_comp_ids {
 	std::vector<ecsact_component_like_id> include_comps;
 	std::vector<ecsact_component_like_id> exclude_comps;
 
-	void push_back_by_capability
-		( ecsact_system_capability  cap
-		, ecsact_component_like_id  comp
-		)
-	{
+	void push_back_by_capability(
+		ecsact_system_capability cap,
+		ecsact_component_like_id comp
+	) {
 		if((cap & ECSACT_SYS_CAP_READWRITE) == ECSACT_SYS_CAP_READWRITE) {
 			readwrite_comps.push_back(comp);
-		} else
-		if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
+		} else if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
 			readonly_comps.push_back(comp);
-		} else
-		if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
+		} else if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
 			writeonly_comps.push_back(comp);
 		}
 
@@ -153,11 +151,10 @@ struct system_capability_comp_ids {
 	}
 };
 
-static void write_system_capabilities_info_struct
-	( ecsact::codegen_plugin_context&  ctx
-	, auto                             id
-	)
-{
+static void write_system_capabilities_info_struct(
+	ecsact::codegen_plugin_context& ctx,
+	auto                            id
+) {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::get_system_generates_components;
 
@@ -173,7 +170,7 @@ static void write_system_capabilities_info_struct
 	ctx.write("template<typename ComponentLikeT, std::size_t FieldOffset>\n");
 	ctx.write("struct association;\n\n");
 
-	system_capability_comp_ids cap_comps;
+	system_capability_comp_ids                               cap_comps;
 	std::multimap<ecsact_component_like_id, ecsact_field_id> assoc_fields;
 
 	for(auto& entry : ecsact::meta::system_capabilities(sys_like_id)) {
@@ -231,29 +228,23 @@ static void write_system_capabilities_info_struct
 		",\n\t",
 		ecsact::meta::get_system_generates_ids(sys_like_id),
 		[&](ecsact_system_generates_id gen_id) {
-			auto generates_comps = get_system_generates_components(
-				sys_like_id,
-				gen_id
-			);
+			auto generates_comps =
+				get_system_generates_components(sys_like_id, gen_id);
 
 			ctx.write("mp_list<\n\t\t");
 			++ctx.indentation;
-			ctx.write_each(
-				",\n\t",
-				generates_comps,
-				[&](auto& entry) {
-					auto comp_full_name = ecsact::meta::decl_full_name(entry.first);
-					switch(entry.second) {
-						case ECSACT_SYS_GEN_REQUIRED:
-							ctx.write("entity_component_required");
-							break;
-						case ECSACT_SYS_GEN_OPTIONAL:
-							ctx.write("entity_component_optional");
-							break;
-					}
-					ctx.write("<", cpp_identifier(comp_full_name), ">");
+			ctx.write_each(",\n\t", generates_comps, [&](auto& entry) {
+				auto comp_full_name = ecsact::meta::decl_full_name(entry.first);
+				switch(entry.second) {
+					case ECSACT_SYS_GEN_REQUIRED:
+						ctx.write("entity_component_required");
+						break;
+					case ECSACT_SYS_GEN_OPTIONAL:
+						ctx.write("entity_component_optional");
+						break;
 				}
-			);
+				ctx.write("<", cpp_identifier(comp_full_name), ">");
+			});
 			--ctx.indentation;
 			ctx.write("\n\t>");
 		}
@@ -262,12 +253,12 @@ static void write_system_capabilities_info_struct
 
 	for(auto& comp_field_pair : assoc_fields) {
 		ecsact_component_like_id comp = comp_field_pair.first;
-		ecsact_field_id field_id = comp_field_pair.second;
-		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp);
-		auto comp_full_name = ecsact::meta::decl_full_name(comp);
-		auto comp_cpp_full_name = cpp_identifier(comp_full_name);
+		ecsact_field_id          field_id = comp_field_pair.second;
+		auto        compo_id = ecsact_id_cast<ecsact_composite_id>(comp);
+		auto        comp_full_name = ecsact::meta::decl_full_name(comp);
+		auto        comp_cpp_full_name = cpp_identifier(comp_full_name);
 		std::string field_name = ecsact_meta_field_name(compo_id, field_id);
-		auto field_offset = ecsact_meta_field_offset(compo_id, field_id);
+		auto        field_offset = ecsact_meta_field_offset(compo_id, field_id);
 
 		ctx.write("template<>\n");
 		ctx.write("struct association<", comp_cpp_full_name, ", ");
@@ -297,19 +288,35 @@ static void write_system_capabilities_info_struct
 		}
 
 		ctx.write("using readonly_components = mp_list<\n\t");
-		ctx.write_each(",\n\t", assoc_cap_comps.readonly_comps, write_comp_full_name);
+		ctx.write_each(
+			",\n\t",
+			assoc_cap_comps.readonly_comps,
+			write_comp_full_name
+		);
 		ctx.write("\n>;\n");
 
 		ctx.write("using readwrite_components = mp_list<\n\t");
-		ctx.write_each(",\n\t", assoc_cap_comps.readwrite_comps, write_comp_full_name);
+		ctx.write_each(
+			",\n\t",
+			assoc_cap_comps.readwrite_comps,
+			write_comp_full_name
+		);
 		ctx.write("\n>;\n");
 
 		ctx.write("using writeonly_components = mp_list<\n\t");
-		ctx.write_each(",\n\t", assoc_cap_comps.writeonly_comps, write_comp_full_name);
+		ctx.write_each(
+			",\n\t",
+			assoc_cap_comps.writeonly_comps,
+			write_comp_full_name
+		);
 		ctx.write("\n>;\n");
 
 		ctx.write("using optional_components = mp_list<\n\t");
-		ctx.write_each(",\n\t", assoc_cap_comps.optional_comps, write_comp_full_name);
+		ctx.write_each(
+			",\n\t",
+			assoc_cap_comps.optional_comps,
+			write_comp_full_name
+		);
 		ctx.write("\n>;\n");
 
 		ctx.write("using adds_components = mp_list<\n\t");
@@ -317,15 +324,18 @@ static void write_system_capabilities_info_struct
 		ctx.write("\n>;\n");
 
 		ctx.write("using removes_components = mp_list<\n\t");
-		ctx.write_each(",\n\t", assoc_cap_comps.removes_comps, write_comp_full_name);
+		ctx
+			.write_each(",\n\t", assoc_cap_comps.removes_comps, write_comp_full_name);
 		ctx.write("\n>;\n");
 
 		ctx.write("using include_components = mp_list<\n\t");
-		ctx.write_each(",\n\t", assoc_cap_comps.include_comps, write_comp_full_name);
+		ctx
+			.write_each(",\n\t", assoc_cap_comps.include_comps, write_comp_full_name);
 		ctx.write("\n>;\n");
 
 		ctx.write("using exclude_components = mp_list<\n\t");
-		ctx.write_each(",\n\t", assoc_cap_comps.exclude_comps, write_comp_full_name);
+		ctx
+			.write_each(",\n\t", assoc_cap_comps.exclude_comps, write_comp_full_name);
 		ctx.write("\n>;\n");
 
 		// TODO(zaucy): Recursively support associations
@@ -336,22 +346,18 @@ static void write_system_capabilities_info_struct
 	}
 
 	ctx.write("using associations = mp_list<\n\t");
-	ctx.write_each(
-		",\n\t",
-		assoc_fields,
-		[&](auto comp_field_pair) {
-			ecsact_component_like_id comp = comp_field_pair.first;
-			ecsact_field_id field_id = comp_field_pair.second;
-			auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp);
-			auto comp_full_name = ecsact::meta::decl_full_name(comp);
-			auto comp_cpp_full_name = cpp_identifier(comp_full_name);
-			std::string field_name = ecsact_meta_field_name(compo_id, field_id);
+	ctx.write_each(",\n\t", assoc_fields, [&](auto comp_field_pair) {
+		ecsact_component_like_id comp = comp_field_pair.first;
+		ecsact_field_id          field_id = comp_field_pair.second;
+		auto        compo_id = ecsact_id_cast<ecsact_composite_id>(comp);
+		auto        comp_full_name = ecsact::meta::decl_full_name(comp);
+		auto        comp_cpp_full_name = cpp_identifier(comp_full_name);
+		std::string field_name = ecsact_meta_field_name(compo_id, field_id);
 
-			ctx.write("association<", comp_cpp_full_name, ", ");
-			ctx.write(ecsact_meta_field_offset(compo_id, field_id));
-			ctx.write(" /* ", field_name, " */>");
-		}
-	);
+		ctx.write("association<", comp_cpp_full_name, ", ");
+		ctx.write(ecsact_meta_field_offset(compo_id, field_id));
+		ctx.write(" /* ", field_name, " */>");
+	});
 	ctx.write("\n>;\n");
 
 	--ctx.indentation;
@@ -359,11 +365,10 @@ static void write_system_capabilities_info_struct
 }
 
 template<typename CompositeID>
-static void write_fields_count_constexpr
-	( ecsact::codegen_plugin_context&  ctx
-	, CompositeID                      id
-	)
-{
+static void write_fields_count_constexpr(
+	ecsact::codegen_plugin_context& ctx,
+	CompositeID                     id
+) {
 	auto full_name = ecsact::meta::decl_full_name(id);
 	auto cpp_full_name = ecsact::cc_lang_support::cpp_identifier(full_name);
 	auto compo_id = ecsact_id_cast<ecsact_composite_id>(id);
@@ -379,11 +384,10 @@ static void write_fields_count_constexpr
 }
 
 template<typename CompositeID>
-static void write_fields_info_constexpr
-	( ecsact::codegen_plugin_context&  ctx
-	, CompositeID                      id
-	)
-{
+static void write_fields_info_constexpr(
+	ecsact::codegen_plugin_context& ctx,
+	CompositeID                     id
+) {
 	auto full_name = ecsact::meta::decl_full_name(id);
 	auto cpp_full_name = ecsact::cc_lang_support::cpp_identifier(full_name);
 	auto compo_id = ecsact_id_cast<ecsact_composite_id>(id);
@@ -400,8 +404,8 @@ static void write_fields_info_constexpr
 	ctx.write("\n");
 
 	for(auto field_id : ecsact::meta::get_field_ids(compo_id)) {
-		auto field_type = ecsact_meta_field_type(compo_id, field_id);
-		auto field_offset = ecsact_meta_field_offset(compo_id, field_id);
+		auto        field_type = ecsact_meta_field_type(compo_id, field_id);
+		auto        field_offset = ecsact_meta_field_offset(compo_id, field_id);
 		std::string field_name = ecsact_meta_field_name(compo_id, field_id);
 		ecsact_builtin_type field_storage_type = {};
 
@@ -410,15 +414,13 @@ static void write_fields_info_constexpr
 				field_storage_type = field_type.type.builtin;
 				break;
 			case ECSACT_TYPE_KIND_ENUM:
-				field_storage_type = ecsact_meta_enum_storage_type(
-					field_type.type.enum_id
-				);
+				field_storage_type =
+					ecsact_meta_enum_storage_type(field_type.type.enum_id);
 				break;
 		}
 
-		std::string field_storage_type_str = field_builtin_type_enum_name(
-			field_storage_type
-		);
+		std::string field_storage_type_str =
+			field_builtin_type_enum_name(field_storage_type);
 
 		ctx.write("ecsact::field_info{\n");
 		ctx.write("\t.offset = ", field_offset, ",\n");
@@ -438,18 +440,17 @@ const char* ecsact_codegen_plugin_name() {
 	return "meta.hh";
 }
 
-void ecsact_codegen_plugin
-  ( ecsact_package_id          package_id
-  , ecsact_codegen_write_fn_t  write_fn
-  )
-{
+void ecsact_codegen_plugin(
+	ecsact_package_id         package_id,
+	ecsact_codegen_write_fn_t write_fn
+) {
 	using ecsact::cc_lang_support::anonymous_system_name;
 	using ecsact::cc_lang_support::cpp_identifier;
-	using ecsact::meta::get_top_level_systems;
 	using ecsact::meta::get_system_generates_components;
+	using ecsact::meta::get_top_level_systems;
 	using namespace std::string_literals;
 
-  ecsact::codegen_plugin_context ctx{package_id, write_fn};
+	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 	ctx.write("#pragma once\n\n");
@@ -469,8 +470,8 @@ void ecsact_codegen_plugin
 	ctx.write("#include \"", package_hh_path.filename().string(), "\"\n");
 	ctx.write("\n");
 
-	auto pkg_name = ecsact::meta::package_name(ctx.package_id);
-	auto top_level_systems = get_top_level_systems(ctx.package_id);
+	auto       pkg_name = ecsact::meta::package_name(ctx.package_id);
+	auto       top_level_systems = get_top_level_systems(ctx.package_id);
 	const auto namespace_str = cpp_identifier(pkg_name);
 
 	ctx.write("namespace "s, namespace_str, " {\n\n"s);
@@ -551,7 +552,7 @@ void ecsact_codegen_plugin
 		}
 	);
 	ctx.write("\n>;\n");
-	
+
 	--ctx.indentation;
 	ctx.write("\n};\n");
 

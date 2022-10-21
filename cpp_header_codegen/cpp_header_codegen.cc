@@ -10,13 +10,12 @@ constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
 template<typename T>
-static void write_constexpr_id
-	( ecsact::codegen_plugin_context&  ctx
-	, const char*                      id_type_name
-	, T                                id
-	, std::string_view                 indentation
-	)
-{
+static void write_constexpr_id(
+	ecsact::codegen_plugin_context& ctx,
+	const char*                     id_type_name,
+	T                               id,
+	std::string_view                indentation
+) {
 	ctx.write(
 		indentation,
 		"static constexpr auto id = static_cast<",
@@ -28,10 +27,7 @@ static void write_constexpr_id
 }
 
 template<typename T>
-static std::vector<ecsact_field_id> get_field_ids
-	( T id
-	)
-{
+static std::vector<ecsact_field_id> get_field_ids(T id) {
 	ecsact_composite_id compo_id;
 	if constexpr(std::is_same_v<ecsact_composite_id, T>) {
 		compo_id = id;
@@ -55,19 +51,17 @@ static bool has_parent_system(ecsact_system_id id) {
 	return parent_id != (ecsact_system_like_id)-1;
 }
 
-static void write_fields
-	( ecsact::codegen_plugin_context&  ctx
-	, ecsact_composite_id              compo_id
-	, std::string_view                 indentation
-	)
-{
-	using ecsact::cc_lang_support::cpp_type_str;
+static void write_fields(
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_composite_id             compo_id,
+	std::string_view                indentation
+) {
 	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::cc_lang_support::cpp_type_str;
 	using namespace std::string_literals;
 
-	auto full_name = ecsact_meta_decl_full_name(
-		ecsact_id_cast<ecsact_decl_id>(compo_id)
-	);
+	auto full_name =
+		ecsact_meta_decl_full_name(ecsact_id_cast<ecsact_decl_id>(compo_id));
 
 	for(auto field_id : get_field_ids(compo_id)) {
 		auto field_type = ecsact_meta_field_type(compo_id, field_id);
@@ -98,21 +92,19 @@ static void write_fields
 	);
 }
 
-static void write_system_impl_decl
-	( ecsact::codegen_plugin_context&  ctx
-	, std::string_view                 indentation
-	)
-{
+static void write_system_impl_decl(
+	ecsact::codegen_plugin_context& ctx,
+	std::string_view                indentation
+) {
 	ctx.write(indentation, "struct context;\n");
 	ctx.write(indentation, "static void impl(context&);\n");
 }
 
-static void write_system_struct
-	( ecsact::codegen_plugin_context&  ctx
-	, ecsact_system_id                 sys_id
-	, std::string                      indentation
-	)
-{
+static void write_system_struct(
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_system_id                sys_id,
+	std::string                     indentation
+) {
 	using namespace std::string_literals;
 	using ecsact::cc_lang_support::anonymous_system_name;
 	using ecsact::meta::get_child_system_ids;
@@ -142,20 +134,19 @@ const char* ecsact_codegen_plugin_name() {
 	return "hh";
 }
 
-void ecsact_codegen_plugin
-  ( ecsact_package_id          package_id
-  , ecsact_codegen_write_fn_t  write_fn
-  )
-{
+void ecsact_codegen_plugin(
+	ecsact_package_id         package_id,
+	ecsact_codegen_write_fn_t write_fn
+) {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using namespace std::string_literals;
+	using ecsact::meta::get_action_ids;
+	using ecsact::meta::get_child_system_ids;
 	using ecsact::meta::get_component_ids;
 	using ecsact::meta::get_enum_ids;
 	using ecsact::meta::get_enum_values;
-	using ecsact::meta::get_transient_ids;
 	using ecsact::meta::get_system_ids;
-	using ecsact::meta::get_child_system_ids;
-	using ecsact::meta::get_action_ids;
+	using ecsact::meta::get_transient_ids;
 
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
@@ -176,7 +167,7 @@ void ecsact_codegen_plugin
 		ctx.write("enum class "s, ecsact_meta_enum_name(enum_id), "{");
 		++ctx.indentation;
 		ctx.write("\n");
-		
+
 		for(auto& enum_value : get_enum_values(enum_id)) {
 			ctx.write(enum_value.name, " = ", enum_value.value, ",\n");
 		}
