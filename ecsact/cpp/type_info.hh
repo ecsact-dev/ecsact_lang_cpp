@@ -41,9 +41,6 @@ struct system_capabilities_info {
 	using associations = mp_list<>;
 };
 
-template<typename CompositeT>
-constexpr std::size_t fields_count = 0;
-
 struct field_info {
 	/**
 	 * Offset in component layout. Same as `offsetof(Component, field)`.
