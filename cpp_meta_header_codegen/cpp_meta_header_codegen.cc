@@ -436,10 +436,6 @@ static void write_fields_info_constexpr(
 	ctx.write("\n}\n");
 }
 
-const char* ecsact_codegen_plugin_name() {
-	return "meta.hh";
-}
-
 void ecsact_codegen_plugin(
 	ecsact_package_id         package_id,
 	ecsact_codegen_write_fn_t write_fn
@@ -557,6 +553,14 @@ void ecsact_codegen_plugin(
 	ctx.write("\n};\n");
 
 	ctx.write("\n}// namespace "s, namespace_str, "\n"s);
+
+	for(auto& comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+		write_fields_count_constexpr(ctx, comp_id);
+	}
+
+	for(auto& comp_id : ecsact::meta::get_action_ids(ctx.package_id)) {
+		write_fields_count_constexpr(ctx, comp_id);
+	}
 
 	for(auto& comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
 		write_fields_info_constexpr(ctx, comp_id);
