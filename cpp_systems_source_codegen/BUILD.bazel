@@ -12,9 +12,7 @@ cc_ecsact_codegen_plugin(
     deps = ["//:support"],
 )
 
-filegroup(
+alias(
     name = "cpp_systems_source_codegen",
-    srcs = [
-        ":ecsact_cpp_systems_source_codegen",
-    ],
+    actual = ":ecsact_cpp_systems_source_codegen",
 )

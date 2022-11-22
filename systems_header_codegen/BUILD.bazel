@@ -11,9 +11,7 @@ cc_ecsact_codegen_plugin(
     deps = ["//:support"],
 )
 
-filegroup(
+alias(
     name = "systems_header_codegen",
-    srcs = [
-        ":ecsact_systems_header_codegen",
-    ],
+    actual = ":ecsact_systems_header_codegen",
 )
