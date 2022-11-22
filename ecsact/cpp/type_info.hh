@@ -41,6 +41,9 @@ struct system_capabilities_info {
 	using associations = mp_list<>;
 };
 
+template<typename CompositeT>
+constexpr std::size_t fields_count();
+
 struct field_info {
 	/**
 	 * Offset in component layout. Same as `offsetof(Component, field)`.
@@ -70,6 +73,6 @@ struct field_info {
  * @returns std::array of `field_info` instances
  */
 template<typename C>
-constexpr std::array<field_info, fields_count<C>> fields_info();
+constexpr std::array<field_info, fields_count<C>()> fields_info();
 
 } // namespace ecsact

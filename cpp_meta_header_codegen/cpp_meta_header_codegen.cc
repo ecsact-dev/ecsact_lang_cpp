@@ -365,6 +365,25 @@ static void write_system_capabilities_info_struct(
 }
 
 template<typename CompositeID>
+static void write_fields_count_constexpr(
+	ecsact::codegen_plugin_context& ctx,
+	CompositeID                     id
+) {
+	auto full_name = ecsact::meta::decl_full_name(id);
+	auto cpp_full_name = ecsact::cc_lang_support::cpp_identifier(full_name);
+	auto compo_id = ecsact_id_cast<ecsact_composite_id>(id);
+	auto fields_count = ecsact_meta_count_fields(compo_id);
+
+	ctx.write(
+		"template<> constexpr std::size_t ecsact::fields_count<",
+		cpp_full_name,
+		">() { return ",
+		fields_count,
+		"; }\n"
+	);
+}
+
+template<typename CompositeID>
 static void write_fields_info_constexpr(
 	ecsact::codegen_plugin_context& ctx,
 	CompositeID                     id
