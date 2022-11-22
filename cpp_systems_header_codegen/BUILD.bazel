@@ -8,6 +8,7 @@ cc_ecsact_codegen_plugin(
     srcs = ["cpp_systems_header_codegen.cc"],
     copts = copts,
     no_validate_test = True,  # file name is too long on Windows
+    output_extension = "systems.hh",
     deps = ["//:support"],
 )
 

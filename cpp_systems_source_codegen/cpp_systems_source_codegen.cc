@@ -10,10 +10,6 @@ namespace fs = std::filesystem;
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
-const char* ecsact_codegen_plugin_name() {
-	return "systems.cc";
-}
-
 void ecsact_codegen_plugin(
 	ecsact_package_id         package_id,
 	ecsact_codegen_write_fn_t write_fn

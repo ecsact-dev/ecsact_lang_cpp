@@ -8,12 +8,11 @@ cc_ecsact_codegen_plugin(
     srcs = ["cpp_meta_header_codegen.cc"],
     copts = copts,
     no_validate_test = True,  # file name is too long on Windows
+    output_extension = "meta.hh",
     deps = ["//:support"],
 )
 
-filegroup(
+alias(
     name = "cpp_meta_header_codegen",
-    srcs = [
-        ":ecsact_cpp_meta_header_codegen",
-    ],
+    actual = ":ecsact_cpp_meta_header_codegen",
 )

@@ -174,10 +174,6 @@ static void write_context_remove_specialize(
 	ctx.write(indentation, "}\n");
 }
 
-const char* ecsact_codegen_plugin_name() {
-	return "systems.hh";
-}
-
 void ecsact_codegen_plugin(
 	ecsact_package_id         package_id,
 	ecsact_codegen_write_fn_t write_fn
