@@ -31,14 +31,12 @@ static void write_context_method_error_body(
 	std::string_view                          err_msg,
 	const std::set<ecsact_component_like_id>& allowed_components
 ) {
-	std::string full_err_msg =
-		"\n\n" + std::string(err_msg) + " The following components are allowed:\n";
+	std::string full_err_msg = "\n\n" + std::string(err_msg);
+	full_err_msg += "\nThe following components are allowed:\n";
 
 	for(auto comp_like_id : allowed_components) {
 		full_err_msg += " - " + ecsact::meta::decl_full_name(comp_like_id) + "\n";
 	}
-
-	full_err_msg += "\n";
 
 	write_red_herring_static_assert(ctx, indentation, full_err_msg);
 }
