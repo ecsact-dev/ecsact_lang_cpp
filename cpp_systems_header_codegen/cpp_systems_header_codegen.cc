@@ -65,8 +65,8 @@ static void write_context_get_decl(
 }
 
 static void write_context_update_decl(
-	ecsact::codegen_plugin_context& ctx,
-	std::string_view                indentation,
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& updatable_components
 ) {
@@ -85,8 +85,8 @@ static void write_context_update_decl(
 }
 
 static void write_context_add_decl(
-	ecsact::codegen_plugin_context& ctx,
-	std::string_view                indentation,
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& addable_components
 ) {
@@ -118,8 +118,8 @@ static void write_context_add_decl(
 }
 
 static void write_context_remove_decl(
-	ecsact::codegen_plugin_context& ctx,
-	std::string_view                indentation,
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& removable_components
 ) {
