@@ -25,18 +25,57 @@ static void write_red_herring_static_assert(
 	ctx.write(")\");\n");
 }
 
+static void word_wrap(std::string& str, int max_length) {
+	int index = 0;
+	int count = 0;
+	int last_word_end = 0;
+
+	for(auto itr = str.begin(); itr != str.end(); ++itr) {
+		if(count >= max_length) {
+			str[last_word_end] = '\n';
+			count = 0;
+		} else if(*itr == '\n') {
+			count = 0;
+		} else {
+			count += 1;
+		}
+
+		if(std::isspace(*itr)) {
+			last_word_end = index;
+		}
+
+		index += 1;
+	}
+}
+
+static void insert_prefix(std::string& str, std::string_view prefix) {
+	for(auto itr = str.begin(); itr != str.end(); ++itr) {
+		if(*itr == '\n' && itr != str.begin()) {
+			itr = str.insert(std::next(itr), prefix.begin(), prefix.end());
+		}
+	}
+}
+
 static void write_context_method_error_body(
 	ecsact::codegen_plugin_context&           ctx,
 	std::string_view                          indentation,
 	std::string_view                          err_msg,
 	const std::set<ecsact_component_like_id>& allowed_components
 ) {
-	std::string full_err_msg = "\n\n" + std::string(err_msg);
-	full_err_msg += "\nThe following components are allowed:\n";
+	const std::string msg_start = " | ";
+
+	std::string full_err_msg =
+		"\n\n[Ecsact C++ Error]: System Execution Context Misuse\n\n" +
+		std::string(err_msg);
+	full_err_msg += " The following components are allowed:\n";
+
+	word_wrap(full_err_msg, 80 - static_cast<int>(msg_start.size()));
 
 	for(auto comp_like_id : allowed_components) {
-		full_err_msg += " - " + ecsact::meta::decl_full_name(comp_like_id) + "\n";
+		full_err_msg += "\t- " + ecsact::meta::decl_full_name(comp_like_id) + "\n";
 	}
+
+	insert_prefix(full_err_msg, msg_start);
 
 	write_red_herring_static_assert(ctx, indentation, full_err_msg);
 }
