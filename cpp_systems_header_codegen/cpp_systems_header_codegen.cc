@@ -13,39 +13,165 @@ namespace fs = std::filesystem;
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
-static void write_context_get_decl(
+static void write_red_herring_static_assert(
 	ecsact::codegen_plugin_context& ctx,
-	std::string_view                indentation
+	std::string_view                indentation,
+	std::string_view                error_message
 ) {
+	ctx.write(indentation, "// local type to make static assert always fail\n");
+	ctx.write(indentation, "struct red_herring {};\n");
+	ctx.write(indentation, "static_assert(std::is_same_v<T, red_herring>, R\"(");
+	ctx.write(error_message);
+	ctx.write(")\");\n");
+}
+
+static void word_wrap(std::string& str, int max_length) {
+	int index = 0;
+	int count = 0;
+	int last_word_end = 0;
+
+	for(auto itr = str.begin(); itr != str.end(); ++itr) {
+		if(count >= max_length) {
+			str[last_word_end] = '\n';
+			count = 0;
+		} else if(*itr == '\n') {
+			count = 0;
+		} else {
+			count += 1;
+		}
+
+		if(std::isspace(*itr)) {
+			last_word_end = index;
+		}
+
+		index += 1;
+	}
+}
+
+static void insert_prefix(std::string& str, std::string_view prefix) {
+	for(auto itr = str.begin(); itr != str.end(); ++itr) {
+		if(*itr == '\n' && itr != str.begin()) {
+			itr = str.insert(std::next(itr), prefix.begin(), prefix.end());
+		}
+	}
+}
+
+static void write_context_method_error_body(
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
+	std::string_view                          err_msg,
+	const std::set<ecsact_component_like_id>& allowed_components
+) {
+	const std::string msg_start = " | ";
+
+	std::string full_err_msg =
+		"\n\n[Ecsact C++ Error]: System Execution Context Misuse\n\n" +
+		std::string(err_msg);
+	full_err_msg += " The following components are allowed:\n";
+
+	word_wrap(full_err_msg, 80 - static_cast<int>(msg_start.size()));
+
+	for(auto comp_like_id : allowed_components) {
+		full_err_msg += "\t- " + ecsact::meta::decl_full_name(comp_like_id) + "\n";
+	}
+
+	insert_prefix(full_err_msg, msg_start);
+
+	write_red_herring_static_assert(ctx, indentation, full_err_msg);
+}
+
+static void write_context_get_decl(
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
+	std::string_view                          sys_like_full_name,
+	const std::set<ecsact_component_like_id>& gettable_components
+) {
+	using namespace std::string_literals;
 	ctx.write(indentation, "template<typename T>\n");
-	ctx.write(indentation, "T get();\n");
+	ctx.write(indentation, "T get() {\n");
+
+	write_context_method_error_body(
+		ctx,
+		std::string(indentation) + "\t",
+		std::string(sys_like_full_name) +
+			" context.get<T> may only be called with a component readable by the "
+			"system. Did you forget to add readonly or readwrite capabilities?",
+		gettable_components
+	);
+	ctx.write(indentation, "}\n");
 }
 
 static void write_context_update_decl(
-	ecsact::codegen_plugin_context& ctx,
-	std::string_view                indentation
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
+	std::string_view                          sys_like_full_name,
+	const std::set<ecsact_component_like_id>& updatable_components
 ) {
 	ctx.write(indentation, "template<typename T>\n");
-	ctx.write(indentation, "void update(const T& updated_component);\n");
+	ctx.write(indentation, "void update(const T& updated_component) {\n");
+
+	write_context_method_error_body(
+		ctx,
+		std::string(indentation) + "\t",
+		std::string(sys_like_full_name) +
+			" context.update<T> may only be called with a component writable by the "
+			"system. Did you forget to add readwrite capabilities?",
+		updatable_components
+	);
+	ctx.write(indentation, "}\n");
 }
 
 static void write_context_add_decl(
-	ecsact::codegen_plugin_context& ctx,
-	std::string_view                indentation
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
+	std::string_view                          sys_like_full_name,
+	const std::set<ecsact_component_like_id>& addable_components
 ) {
 	ctx.write(indentation, "template<typename T>\n");
 	ctx.write(indentation, "\trequires(!std::is_empty_v<T>)\n");
-	ctx.write(indentation, "void add(const T& new_component);\n");
+	ctx.write(indentation, "void add(const T& new_component) {\n");
+
+	write_context_method_error_body(
+		ctx,
+		std::string(indentation) + "\t",
+		std::string(sys_like_full_name) +
+			" context.add<T> may only be called with a component addable by the "
+			"system. Did you forget to add adds capabilities?",
+		addable_components
+	);
+	ctx.write(indentation, "}\n");
+
 	ctx.write(indentation, "template<typename T>\n");
-	ctx.write(indentation, "void add();\n");
+	ctx.write(indentation, "void add() {\n");
+	write_context_method_error_body(
+		ctx,
+		std::string(indentation) + "\t",
+		std::string(sys_like_full_name) +
+			" context.add<T> may only be called with a component addable by the "
+			"system. Did you forget to add adds capabilities?",
+		addable_components
+	);
+	ctx.write(indentation, "}\n");
 }
 
 static void write_context_remove_decl(
-	ecsact::codegen_plugin_context& ctx,
-	std::string_view                indentation
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          indentation,
+	std::string_view                          sys_like_full_name,
+	const std::set<ecsact_component_like_id>& removable_components
 ) {
 	ctx.write(indentation, "template<typename T>\n");
-	ctx.write(indentation, "void remove();\n");
+	ctx.write(indentation, "void remove() {\n");
+
+	write_context_method_error_body(
+		ctx,
+		std::string(indentation) + "\t",
+		std::string(sys_like_full_name) +
+			" context.remove<T> may only be called with a component removable by the "
+			"system. Did you forget to add removes capabilities?",
+		removable_components
+	);
+	ctx.write(indentation, "}\n");
 }
 
 static void write_context_has_decl(
@@ -304,16 +430,16 @@ void ecsact_codegen_plugin(
 		}
 
 		if(!get_components.empty()) {
-			write_context_get_decl(ctx, "\t");
+			write_context_get_decl(ctx, "\t", full_name, get_components);
 		}
 		if(!update_components.empty()) {
-			write_context_update_decl(ctx, "\t");
+			write_context_update_decl(ctx, "\t", full_name, update_components);
 		}
 		if(!add_components.empty()) {
-			write_context_add_decl(ctx, "\t");
+			write_context_add_decl(ctx, "\t", full_name, add_components);
 		}
 		if(!remove_components.empty()) {
-			write_context_remove_decl(ctx, "\t");
+			write_context_remove_decl(ctx, "\t", full_name, remove_components);
 		}
 		if(!optional_components.empty()) {
 			write_context_has_decl(ctx, "\t");
