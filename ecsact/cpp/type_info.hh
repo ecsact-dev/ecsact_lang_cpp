@@ -62,9 +62,9 @@ struct field_info {
 	std::size_t length;
 
 	template<typename FieldType>
-	constexpr auto get(const auto& component) const noexcept {
+	constexpr auto get(const void* component_data) const noexcept {
 		return *reinterpret_cast<const FieldType*>(
-			reinterpret_cast<const char*>(&component) + offset
+			reinterpret_cast<const char*>(component_data) + offset
 		);
 	}
 };
