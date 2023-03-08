@@ -464,6 +464,23 @@ void ecsact_codegen_plugin(
 	ctx.write("#include \"ecsact/cpp/type_info.hh\"\n");
 	ctx.write("#include \"ecsact/lib.hh\"\n");
 	ctx.write("#include \"", package_hh_path.filename().string(), "\"\n");
+
+	for(auto dep_pkg_id : ecsact::meta::get_dependencies(package_id)) {
+		fs::path dep_pkg_meta_hh_path = ecsact_meta_package_file_path(dep_pkg_id);
+		dep_pkg_meta_hh_path.replace_extension(
+			dep_pkg_meta_hh_path.extension().string() + ".meta.hh"
+		);
+
+		if(dep_pkg_meta_hh_path.has_parent_path()) {
+			dep_pkg_meta_hh_path =
+				fs::relative(dep_pkg_meta_hh_path, package_hh_path.parent_path());
+		} else {
+			dep_pkg_meta_hh_path = dep_pkg_meta_hh_path.filename();
+		}
+
+		ctx.write("#include \"", dep_pkg_meta_hh_path.generic_string(), "\"\n");
+	}
+
 	ctx.write("\n");
 
 	auto       pkg_name = ecsact::meta::package_name(ctx.package_id);
