@@ -330,6 +330,25 @@ void ecsact_codegen_plugin(
 	ctx.write("#include \"", package_hh_path.filename().string(), "\"\n");
 	ctx.write("#include \"", pacakge_systems_h_path.filename().string(), "\"\n");
 
+	for(auto dep_pkg_id : ecsact::meta::get_dependencies(package_id)) {
+		fs::path dep_pkg_systems_hh_path =
+			ecsact_meta_package_file_path(dep_pkg_id);
+		dep_pkg_systems_hh_path.replace_extension(
+			dep_pkg_systems_hh_path.extension().string() + ".systems.hh"
+		);
+
+		if(dep_pkg_systems_hh_path.has_parent_path()) {
+			dep_pkg_systems_hh_path =
+				fs::relative(dep_pkg_systems_hh_path, package_hh_path.parent_path());
+		} else {
+			dep_pkg_systems_hh_path = dep_pkg_systems_hh_path.filename();
+		}
+
+		ctx.write("#include \"", dep_pkg_systems_hh_path.generic_string(), "\"\n");
+	}
+
+	ctx.write("\n");
+
 	ctx.write("\nstruct ecsact_system_execution_context;\n");
 
 	auto write_sys_context = [&]<typename ID>(ID id, auto&& extra_body_fn) {
