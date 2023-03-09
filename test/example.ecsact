@@ -1,0 +1,10 @@
+main package example;
+
+import pkg.a;
+import pkg.b;
+
+system ExampleSystemFromImports {
+	readwrite pkg.a.ExampleA;
+	readwrite pkg.b.ExampleB;
+}
+
