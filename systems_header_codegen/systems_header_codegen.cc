@@ -11,20 +11,6 @@
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
-constexpr auto VISIBILITY_MACROS = R"(
-#ifndef ECSACT_SYSTEM_EXTERN
-#	ifdef __cplusplus
-#		define ECSACT_SYSTEM_EXTERN extern "C"
-#	else
-#		define ECSACT_SYSTEM_EXTERN extern
-#	endif
-#endif // ECSACT_SYSTEM_EXTERN
-
-#ifndef ECSACT_SYSTEM_VISIBILITY
-#	define ECSACT_SYSTEM_VISIBILITY
-#endif // ECSACT_SYSTEM_VISIBILITY
-)";
-
 static std::vector<ecsact_system_id> get_system_ids( //
 	ecsact_package_id package_id
 ) {
@@ -85,9 +71,16 @@ static void write_system_impl_fn_decl(
 		return;
 	}
 
+	auto c_impl_fn_name = c_identifier(full_name);
+
 	ctx.write(
-		"ECSACT_SYSTEM_VISIBILITY ECSACT_SYSTEM_EXTERN void ",
-		c_identifier(full_name),
+		"\n",
+		"ECSACT_EXTERN\n",
+		"ECSACT_EXPORT(\"",
+		c_impl_fn_name,
+		"\")\n",
+		"void ",
+		c_impl_fn_name,
 		"(struct ecsact_system_execution_context*);\n"
 	);
 }
@@ -105,8 +98,7 @@ void ecsact_codegen_plugin(
 	ctx.write("#ifndef ", inc_guard_str, "\n");
 	ctx.write("#define ", inc_guard_str, "\n\n");
 
-	ctx.write(VISIBILITY_MACROS);
-	ctx.write("\n");
+	ctx.write("#include \"ecsact/runtime/common.h\"\n\n");
 
 	for(auto action_id : get_action_ids(ctx.package_id)) {
 		write_system_impl_fn_decl(ctx, action_id);
