@@ -31,8 +31,8 @@ template<typename SystemT>
 struct system_lazy_execution_iteration_rate;
 
 template<typename SystemT>
-using system_lazy_execution_iteration_rate_v =
-	typename system_lazy_execution_iteration_rate<SystemT>::value;
+constexpr auto system_lazy_execution_iteration_rate_v =
+	system_lazy_execution_iteration_rate<SystemT>::value;
 
 template<typename SystemLikeT>
 struct system_capabilities_info {

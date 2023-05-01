@@ -80,6 +80,17 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "meta_check",
+    copts = copts,
+    srcs = ["meta_check.cc"],
+    deps = [
+        "//:ecsact_cc",
+        "@ecsact_lang_cpp//:type_info",
+        "@ecsact_runtime//:lib",
+    ],
+)
+
 cc_binary(
     name = "example_system_impls",
     copts = copts,
