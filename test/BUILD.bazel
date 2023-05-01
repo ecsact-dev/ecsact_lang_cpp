@@ -1,4 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_ecsact//ecsact:toolchain.bzl", "ecsact_toolchain")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 
 platform(
@@ -13,6 +14,36 @@ copts = select({
     "@bazel_tools//tools/cpp:msvc": ["/std:c++latest", "/Zc:preprocessor", "/permissive-"],
     "//conditions:default": ["-std=c++20"],
 })
+
+ecsact_toolchain(
+    name = "ecsact_cli_windows",
+    target_tool = "@ecsact_cli_windows//file",
+)
+
+ecsact_toolchain(
+    name = "ecsact_cli_linux",
+    target_tool = "@ecsact_cli_linux//file",
+)
+
+toolchain(
+    name = "ecsact_windows_toolchain",
+    exec_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+    toolchain = ":ecsact_cli_windows",
+    toolchain_type = "@rules_ecsact//ecsact:toolchain_type",
+)
+
+toolchain(
+    name = "ecsact_linux_toolchain",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    toolchain = ":ecsact_cli_linux",
+    toolchain_type = "@rules_ecsact//ecsact:toolchain_type",
+)
 
 ecsact_srcs = [
     "example.ecsact",
