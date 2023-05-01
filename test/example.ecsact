@@ -8,3 +8,19 @@ system ExampleSystemFromImports {
 	readwrite pkg.b.ExampleB;
 }
 
+system ExampleLazy(lazy) {
+	readwrite pkg.a.ExampleA;
+}
+
+system LazyLeap(lazy: 24) {
+	readwrite pkg.b.ExampleB;
+}
+
+system ExplicitlyNoLazy(lazy: false) {
+	readwrite pkg.b.ExampleB;
+}
+
+system ExplicitlyNoLazyZero(lazy: 0) {
+	readwrite pkg.b.ExampleB;
+}
+

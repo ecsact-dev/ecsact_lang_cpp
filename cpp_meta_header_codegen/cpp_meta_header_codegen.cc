@@ -436,6 +436,23 @@ static void write_fields_info_constexpr(
 	ctx.write("\n}\n");
 }
 
+static inline auto write_lazy_system_iteration_rate( //
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_system_id                id
+) -> void {
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	auto lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(id);
+
+	ctx.write(
+		"template<> struct ecsact::system_lazy_execution_iteration_rate<",
+		cpp_identifier(get_sys_full_name(ctx.package_id, id)),
+		"> : std::integral_constant<int32_t, ",
+		lazy_iteration_rate,
+		"> {};"
+	);
+}
+
 void ecsact_codegen_plugin(
 	ecsact_package_id         package_id,
 	ecsact_codegen_write_fn_t write_fn
@@ -593,5 +610,9 @@ void ecsact_codegen_plugin(
 
 	for(auto& act_id : ecsact::meta::get_action_ids(ctx.package_id)) {
 		write_system_capabilities_info_struct(ctx, act_id);
+	}
+
+	for(auto& sys_id : ecsact::meta::get_system_ids(ctx.package_id)) {
+		write_lazy_system_iteration_rate(ctx, sys_id);
 	}
 }
