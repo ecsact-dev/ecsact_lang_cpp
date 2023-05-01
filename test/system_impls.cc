@@ -10,3 +10,15 @@ void example::ExampleSystemFromImports::impl(context& ctx) {
 	ctx.update(a);
 	ctx.update(b);
 }
+
+void example::ExampleLazy::impl(context&) {
+}
+
+void example::LazyLeap::impl(context&) {
+}
+
+void example::ExplicitlyNoLazy::impl(context&) {
+}
+
+void example::ExplicitlyNoLazyZero::impl(context&) {
+}
