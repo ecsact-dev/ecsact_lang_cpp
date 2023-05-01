@@ -27,6 +27,13 @@ struct is_action : std::bool_constant<false> {};
 template<typename ActionT>
 using is_action_v = typename is_action<ActionT>::value;
 
+template<typename SystemT>
+struct system_lazy_execution_iteration_rate;
+
+template<typename SystemT>
+using system_lazy_execution_iteration_rate_v =
+	typename system_lazy_execution_iteration_rate<SystemT>::value;
+
 template<typename SystemLikeT>
 struct system_capabilities_info {
 	using readonly_components = mp_list<>;
