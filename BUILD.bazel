@@ -30,6 +30,18 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "cpp_codegen_plugin_util",
+    hdrs = ["ecsact/cpp_codegen_plugin_util.hh"],
+    copts = copts,
+    deps = [
+        "@ecsact_runtime//:common",
+        "@ecsact_runtime//:meta",
+        "@ecsact_runtime//:codegen_plugin_cc",
+        "@ecsact_lang_cpp//:support",
+    ],
+)
+
 filegroup(
     name = "headers",
     srcs = glob(["ecsact/**/*.hh"]),
