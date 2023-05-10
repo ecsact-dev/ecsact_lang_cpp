@@ -9,7 +9,10 @@ cc_ecsact_codegen_plugin(
     copts = copts,
     no_validate_test = True,  # file name is too long on Windows
     output_extension = "meta.hh",
-    deps = ["//:support"],
+    deps = [
+        "//:support",
+        "//:cpp_codegen_plugin_util",
+    ],
 )
 
 alias(

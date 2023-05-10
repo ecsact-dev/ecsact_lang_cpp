@@ -9,6 +9,7 @@
 #include "ecsact/codegen_plugin.h"
 #include "ecsact/codegen_plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
+#include "ecsact/cpp_codegen_plugin_util.hh"
 
 namespace fs = std::filesystem;
 namespace stdr = std::ranges;
@@ -449,8 +450,29 @@ static inline auto write_lazy_system_iteration_rate( //
 		cpp_identifier(get_sys_full_name(ctx.package_id, id)),
 		"> : std::integral_constant<int32_t, ",
 		lazy_iteration_rate,
-		"> {};"
+		"> {};\n\n"
 	);
+}
+
+template<typename DeclId>
+static inline auto write_decl_full_name_specialization( //
+	ecsact::codegen_plugin_context& ctx,
+	DeclId                          id
+) {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::cpp_codegen_plugin_util::method_printer;
+
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(id);
+	auto decl_full_name = ecsact::meta::decl_full_name(decl_id);
+	auto decl_cpp_ident = cpp_identifier(decl_full_name);
+
+	auto method_name = "ecsact::decl_full_name<" + decl_cpp_ident + ">";
+
+	ctx.write("template<> constexpr ");
+	auto printer =
+		method_printer{ctx, method_name}.return_type("std::string_view");
+
+	ctx.write("return \"" + decl_full_name + "\";");
 }
 
 void ecsact_codegen_plugin(
@@ -614,5 +636,21 @@ void ecsact_codegen_plugin(
 
 	for(auto& sys_id : ecsact::meta::get_system_ids(ctx.package_id)) {
 		write_lazy_system_iteration_rate(ctx, sys_id);
+	}
+
+	for(auto& sys_id : ecsact::meta::get_system_ids(ctx.package_id)) {
+		write_decl_full_name_specialization(ctx, sys_id);
+	}
+
+	for(auto& act_id : ecsact::meta::get_action_ids(ctx.package_id)) {
+		write_decl_full_name_specialization(ctx, act_id);
+	}
+
+	for(auto& comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+		write_decl_full_name_specialization(ctx, comp_id);
+	}
+
+	for(auto& trans_id : ecsact::meta::get_transient_ids(ctx.package_id)) {
+		write_decl_full_name_specialization(ctx, trans_id);
 	}
 }
