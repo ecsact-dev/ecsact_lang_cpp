@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <concepts>
 #include "ecsact/codegen_plugin.hh"
 #include "ecsact/runtime/meta.hh"
 
@@ -176,5 +177,23 @@ public:
 		ctx.write("\n}\n\n");
 	}
 };
+
+auto block( //
+	ecsact::codegen_plugin_context& ctx,
+	std::invocable auto&&           block_body_fn
+) {
+	auto printer = block_printer{ctx};
+	block_body_fn();
+}
+
+auto block( //
+	ecsact::codegen_plugin_context& ctx,
+	auto&&                          block_prefix,
+	std::invocable auto&&           block_body_fn
+) {
+	ctx.write(block_prefix, " ");
+	auto printer = block_printer{ctx};
+	block_body_fn();
+}
 
 } // namespace ecsact::cpp_codegen_plugin_util
