@@ -450,7 +450,7 @@ static inline auto write_lazy_system_iteration_rate( //
 		cpp_identifier(get_sys_full_name(ctx.package_id, id)),
 		"> : std::integral_constant<int32_t, ",
 		lazy_iteration_rate,
-		"> {};"
+		"> {};\n\n"
 	);
 }
 
@@ -468,7 +468,7 @@ static inline auto write_decl_full_name_specialization( //
 
 	auto method_name = "ecsact::decl_full_name<" + decl_cpp_ident + ">";
 
-	ctx.write("template<> ");
+	ctx.write("template<> constexpr ");
 	auto printer =
 		method_printer{ctx, method_name}.return_type("std::string_view");
 
