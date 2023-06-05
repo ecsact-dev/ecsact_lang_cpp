@@ -614,11 +614,19 @@ void ecsact_codegen_plugin(
 		write_fields_count_constexpr(ctx, comp_id);
 	}
 
+	for(auto& comp_id : ecsact::meta::get_transient_ids(ctx.package_id)) {
+		write_fields_count_constexpr(ctx, comp_id);
+	}
+
 	for(auto& comp_id : ecsact::meta::get_action_ids(ctx.package_id)) {
 		write_fields_count_constexpr(ctx, comp_id);
 	}
 
 	for(auto& comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+		write_fields_info_constexpr(ctx, comp_id);
+	}
+
+	for(auto& comp_id : ecsact::meta::get_transient_ids(ctx.package_id)) {
 		write_fields_info_constexpr(ctx, comp_id);
 	}
 
