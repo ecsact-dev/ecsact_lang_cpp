@@ -454,6 +454,23 @@ static inline auto write_lazy_system_iteration_rate( //
 	);
 }
 
+static inline auto write_system_parallel_execution( //
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_system_like_id           id
+) -> void {
+	using ecsact::cc_lang_support::cpp_identifier;
+
+	auto parallel = ecsact_meta_get_system_parallel_execution(id);
+
+	ctx.write(
+		"template<> struct ecsact::system_parallel_execution<",
+		cpp_identifier(get_sys_full_name(ctx.package_id, id)),
+		"> : std::integral_constant<bool, ",
+		(parallel ? "true" : "false"),
+		"> {};\n\n"
+	);
+}
+
 template<typename DeclId>
 static inline auto write_decl_full_name_specialization( //
 	ecsact::codegen_plugin_context& ctx,
@@ -646,12 +663,8 @@ void ecsact_codegen_plugin(
 		write_lazy_system_iteration_rate(ctx, sys_id);
 	}
 
-	for(auto& sys_id : ecsact::meta::get_system_ids(ctx.package_id)) {
-		write_decl_full_name_specialization(ctx, sys_id);
-	}
-
-	for(auto& act_id : ecsact::meta::get_action_ids(ctx.package_id)) {
-		write_decl_full_name_specialization(ctx, act_id);
+	for(auto& sys_id : ecsact::meta::get_all_system_like_ids(ctx.package_id)) {
+		write_system_parallel_execution(ctx, sys_id);
 	}
 
 	for(auto& comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {

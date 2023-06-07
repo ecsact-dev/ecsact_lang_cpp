@@ -40,6 +40,13 @@ template<typename SystemT>
 constexpr auto system_lazy_execution_iteration_rate_v =
 	system_lazy_execution_iteration_rate<SystemT>::value;
 
+template<typename SystemT>
+struct system_parallel_execution;
+
+template<typename SystemLikeT>
+constexpr auto system_parallel_execution_v =
+	system_parallel_execution<SystemLikeT>::value;
+
 template<typename SystemLikeT>
 struct system_capabilities_info {
 	using readonly_components = mp_list<>;
