@@ -24,3 +24,7 @@ system ExplicitlyNoLazyZero(lazy: 0) {
 	readwrite pkg.b.ExampleB;
 }
 
+system ParallelExample(parallel) {
+	readwrite pkg.a.ExampleA;
+}
+

@@ -21,3 +21,6 @@ static_assert(
 	ecsact::system_lazy_execution_iteration_rate_v<
 		example::ExplicitlyNoLazyZero> == 0
 );
+
+static_assert(!ecsact::system_parallel_execution_v<example::ExampleLazy>);
+static_assert(ecsact::system_parallel_execution_v<example::ParallelExample>);
