@@ -18,6 +18,7 @@ copts = select({
 ecsact_toolchain(
     name = "ecsact_cli_windows",
     target_tool = "@ecsact_cli_windows//file",
+    # target_tool_path = "C:/Users/zekew/projects/ecsact-dev/ecsact_cli/bazel-bin/ecsact.exe",
 )
 
 ecsact_toolchain(
