@@ -667,6 +667,14 @@ void ecsact_codegen_plugin(
 		write_system_parallel_execution(ctx, sys_id);
 	}
 
+	for(auto& sys_id : ecsact::meta::get_system_ids(ctx.package_id)) {
+		write_decl_full_name_specialization(ctx, sys_id);
+	}
+
+	for(auto& act_id : ecsact::meta::get_action_ids(ctx.package_id)) {
+		write_decl_full_name_specialization(ctx, act_id);
+	}
+
 	for(auto& comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
 		write_decl_full_name_specialization(ctx, comp_id);
 	}

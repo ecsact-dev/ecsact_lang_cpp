@@ -22,3 +22,6 @@ void example::ExplicitlyNoLazy::impl(context&) {
 
 void example::ExplicitlyNoLazyZero::impl(context&) {
 }
+
+void example::ParallelExample::impl(context&) {
+}
