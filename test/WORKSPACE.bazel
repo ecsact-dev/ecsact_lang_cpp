@@ -1,26 +1,10 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
-
-http_archive(
-    name = "rules_ecsact",
-    sha256 = "3db6d498a681e036dabdcc1bb7e5ee254acadae4ab2ecf19d253f824db88d5e4",
-    strip_prefix = "rules_ecsact-0.3.0",
-    urls = ["https://github.com/ecsact-dev/rules_ecsact/archive/refs/tags/0.3.0.tar.gz"],
-)
-
-load("@rules_ecsact//ecsact:repositories.bzl", "rules_ecsact_dependencies")
-
-rules_ecsact_dependencies()
-
-register_toolchains(
-    "//:ecsact_windows_toolchain",
-    "//:ecsact_linux_toolchain",
-)
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "hedron_compile_commands",
-    sha256 = "10b5f7a36252ce0dd3396c289ba0138779adb6436c187266f6a93de505f3434f",
-    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/07c307ab34d458cf0a4187a15ce1f6a2b72c408c.tar.gz",
-    strip_prefix = "bazel-compile-commands-extractor-07c307ab34d458cf0a4187a15ce1f6a2b72c408c",
+    sha256 = "9d1ce53443747dd574a309fbe6774d1cfc94d20abdb7e7de1bb337f9437761bb",
+    strip_prefix = "bazel-compile-commands-extractor-86dbf526c56cebb2c3a060c09fe8c0458a694d23",
+    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/86dbf526c56cebb2c3a060c09fe8c0458a694d23.tar.gz",
 )
 
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
@@ -29,9 +13,9 @@ hedron_compile_commands_setup()
 
 http_archive(
     name = "com_grail_bazel_toolchain",
-    sha256 = "3cf5ac4bb7dae3776da586fe85685274f5d89cbb59436f50f572928354e72198",
-    strip_prefix = "bazel-toolchain-70a0fb556662fe3cadb07da32c91e232eb0d883d",
-    url = "https://github.com/grailbio/bazel-toolchain/archive/70a0fb556662fe3cadb07da32c91e232eb0d883d.zip",
+    sha256 = "5fb0a6ae0f5bc72a7d80e6de0edad906c9936729734009f1c01dac4b06f966e0",
+    strip_prefix = "bazel-toolchain-f94335f1f5434256b1793dafbb7dd07773b0e76e",
+    url = "https://github.com/grailbio/bazel-toolchain/archive/f94335f1f5434256b1793dafbb7dd07773b0e76e.zip",
 )
 
 load("@com_grail_bazel_toolchain//toolchain:deps.bzl", "bazel_toolchain_dependencies")
@@ -42,9 +26,7 @@ load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
 
 llvm_toolchain(
     name = "llvm_toolchain",
-    cxx_standard = {"linux": "c++20"},
-    distribution = "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz",
-    llvm_version = "15.0.6",
+    llvm_version = "16.0.4",
 )
 
 load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
