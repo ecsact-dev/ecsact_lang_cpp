@@ -37,8 +37,8 @@ cc_library(
     deps = [
         "@ecsact_runtime//:common",
         "@ecsact_runtime//:meta",
-        "@ecsact_runtime//:codegen_plugin_cc",
         "@ecsact_lang_cpp//:support",
+        "@ecsact_codegen//:plugin",
     ],
 )
 

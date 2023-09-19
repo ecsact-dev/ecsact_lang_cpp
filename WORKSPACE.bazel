@@ -1,38 +1,4 @@
-workspace(name = "ecsact_lang_cpp")
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-http_archive(
-    name = "ecsact_runtime",
-    sha256 = "35b03aaef0925fda5b5aefb2d6a6e2c9593f31d6414ab157091f9ca26a992da3",
-    strip_prefix = "ecsact_runtime-0.3.0",
-    urls = ["https://github.com/ecsact-dev/ecsact_runtime/archive/refs/tags/0.3.0.tar.gz"],
-)
-
-http_archive(
-    name = "ecsact_codegen",
-    sha256 = "5a1a466dbddbe042c2e5910f3b65ca44a5ffcef5831fdd0c3b2e2863c13cfb31",
-    strip_prefix = "ecsact_codegen-0.0.2",
-    urls = ["https://github.com/ecsact-dev/ecsact_codegen/archive/refs/tags/0.0.2.tar.gz"],
-)
-
-http_archive(
-    name = "boost",
-    sha256 = "4a79c389add7e3d54d0e12c83098d471d24536ba2d6b8593d3a95f151f25eebb",
-    strip_prefix = "boost-da62319c330d81ef032517cbe13b6f35d97387cb",
-    urls = ["https://github.com/bazelboost/boost/archive/da62319c330d81ef032517cbe13b6f35d97387cb.zip"],
-)
-
-load("@boost//:index.bzl", "boost_http_archives")
-
-boost_http_archives()
-
-http_archive(
-    name = "com_google_googletest",
-    sha256 = "d4cb2430eb82495a49a24310a609b99726726bf126c2fbfa92fd04c14f6a3b31",
-    strip_prefix = "googletest-d1a0039b97291dd1dc14f123b906bb7622ffe07c",
-    url = "https://github.com/google/googletest/archive/d1a0039b97291dd1dc14f123b906bb7622ffe07c.zip",
-)
 
 http_archive(
     name = "hedron_compile_commands",
@@ -60,9 +26,7 @@ load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
 
 llvm_toolchain(
     name = "llvm_toolchain",
-    cxx_standard = {"linux": "c++20"},
-    distribution = "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz",
-    llvm_version = "15.0.6",
+    llvm_version = "16.0.4",
 )
 
 load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")

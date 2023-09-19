@@ -1,50 +1,8 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("@rules_ecsact//ecsact:toolchain.bzl", "ecsact_toolchain")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
-
-platform(
-    name = "windows-x86_64",
-    constraint_values = [
-        "@platforms//os:windows",
-        "@platforms//cpu:x86_64",
-    ],
-)
-
-copts = select({
-    "@bazel_tools//tools/cpp:msvc": ["/std:c++latest", "/Zc:preprocessor", "/permissive-"],
-    "//conditions:default": ["-std=c++20"],
-})
-
-ecsact_toolchain(
-    name = "ecsact_cli_windows",
-    target_tool = "@ecsact_cli_windows//file",
-    # target_tool_path = "C:/Users/zekew/projects/ecsact-dev/ecsact_cli/bazel-bin/ecsact.exe",
-)
-
-ecsact_toolchain(
-    name = "ecsact_cli_linux",
-    target_tool = "@ecsact_cli_linux//file",
-)
-
-toolchain(
-    name = "ecsact_windows_toolchain",
-    exec_compatible_with = [
-        "@platforms//os:windows",
-        "@platforms//cpu:x86_64",
-    ],
-    toolchain = ":ecsact_cli_windows",
-    toolchain_type = "@rules_ecsact//ecsact:toolchain_type",
-)
-
-toolchain(
-    name = "ecsact_linux_toolchain",
-    exec_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-    toolchain = ":ecsact_cli_linux",
-    toolchain_type = "@rules_ecsact//ecsact:toolchain_type",
-)
+load("@ecsact_lang_cpp//bazel:copts.bzl", "copts")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
 ecsact_srcs = [
     "example.ecsact",
@@ -103,5 +61,13 @@ cc_binary(
     deps = [
         "//:ecsact_cc",
         "@ecsact_runtime//dylib:dynamic",
+    ],
+)
+
+build_test(
+    name = "build_test",
+    targets = [
+        ":meta_check",
+        ":example_system_impls",
     ],
 )

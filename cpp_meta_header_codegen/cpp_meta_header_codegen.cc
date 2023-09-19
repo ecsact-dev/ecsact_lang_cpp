@@ -6,8 +6,8 @@
 #include <tuple>
 #include <map>
 #include "ecsact/runtime/meta.hh"
-#include "ecsact/codegen_plugin.h"
-#include "ecsact/codegen_plugin.hh"
+#include "ecsact/codegen/plugin.h"
+#include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
 
