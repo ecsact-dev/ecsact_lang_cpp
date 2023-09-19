@@ -4,8 +4,8 @@
 #include <cstring>
 #include <algorithm>
 #include "ecsact/runtime/meta.h"
-#include "ecsact/codegen_plugin.h"
-#include "ecsact/codegen_plugin.hh"
+#include "ecsact/codegen/plugin.h"
+#include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
 
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT

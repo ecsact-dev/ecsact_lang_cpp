@@ -1,8 +1,8 @@
 #include <string>
 #include <filesystem>
 #include "ecsact/runtime/meta.hh"
-#include "ecsact/codegen_plugin.h"
-#include "ecsact/codegen_plugin.hh"
+#include "ecsact/codegen/plugin.h"
+#include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
 
 namespace fs = std::filesystem;

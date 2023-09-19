@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 #include <concepts>
-#include "ecsact/codegen_plugin.hh"
+#include "ecsact/codegen/plugin.hh"
 #include "ecsact/runtime/meta.hh"
 
 namespace ecsact::cpp_codegen_plugin_util {

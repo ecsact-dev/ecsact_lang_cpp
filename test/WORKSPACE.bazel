@@ -1,32 +1,4 @@
-workspace(name = "ecsact_lang_cpp_example")
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
-
-local_repository(
-    name = "ecsact_lang_cpp",
-    path = "..",
-)
-
-http_archive(
-    name = "ecsact_runtime",
-    sha256 = "35b03aaef0925fda5b5aefb2d6a6e2c9593f31d6414ab157091f9ca26a992da3",
-    strip_prefix = "ecsact_runtime-0.3.0",
-    urls = ["https://github.com/ecsact-dev/ecsact_runtime/archive/refs/tags/0.3.0.tar.gz"],
-)
-
-http_file(
-    name = "ecsact_cli_windows",
-    url = "https://github.com/ecsact-dev/ecsact_cli/releases/download/0.1.0/ecsact_0.1.0_windows_x64.exe",
-    executable = True,
-    downloaded_file_path = "ecsact.exe",
-)
-
-http_file(
-    name = "ecsact_cli_linux",
-    url = "https://github.com/ecsact-dev/ecsact_cli/releases/download/0.1.0/ecsact_0.1.0_linux_x64",
-    executable = True,
-    downloaded_file_path = "ecsact",
-)
 
 http_archive(
     name = "rules_ecsact",
