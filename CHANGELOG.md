@@ -2,6 +2,25 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.0 - 2023-09-19
+#### Bug Fixes
+- **(meta)** transient fields_info (#141) - (b0497e1) - Ezekiel Warren
+#### Features
+- bzlmodify (#148) - (369a6f2) - Ezekiel Warren
+- parallel execution available in meta codegen (#142) - (4ac52fc) - Ezekiel Warren
+- added decl_name function to meta header codegen (#136) - (519a9f5) - Ezekiel Warren
+- handy block codegen plugin util function - (74ebca8) - Ezekiel Warren
+- added codegen plugin utility functions (#134) - (54df803) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update bazel c++ tooling repositories (#143) - (d098c2d) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to ceeedcc (#140) - (4e9d547) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to b397ad2 (#139) - (87acaee) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to 41ff2a0 (#138) - (4d12e7d) - renovate[bot]
+- **(deps)** update hedron_compile_commands digest to 3dddf20 (#137) - (637b027) - renovate[bot]
+- **(deps)** update hedron_compile_commands digest to 80ac7ef (#135) - (9af3ce1) - renovate[bot]
+
+- - -
+
 ## 0.2.0 - 2023-05-01
 #### Features
 - lazy execution values in meta codegen (#133) - (63f129c) - Ezekiel Warren
