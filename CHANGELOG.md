@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.1 - 2023-09-21
+#### Miscellaneous Chores
+- **(deps)** update bazel c++ tooling repositories (#144) - (a14819c) - renovate[bot]
+- sync with ecsact_common (#149) - (75d8a01) - seaubot
+- sync with ecsact_common (#147) - (b7b4fc2) - seaubot
+
+- - -
+
 ## 0.3.0 - 2023-09-19
 #### Bug Fixes
 - **(meta)** transient fields_info (#141) - (b0497e1) - Ezekiel Warren
