@@ -1,6 +1,7 @@
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen_plugin")
 load("@rules_ecsact//ecsact/private:ecsact_codegen_plugin.bzl", "EcsactCodegenPluginInfo")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 
 def _cc_ecsact_codegen_plugin_impl(ctx):
     plugin = None
@@ -12,7 +13,19 @@ def _cc_ecsact_codegen_plugin_impl(ctx):
         if file.extension == "dll":
             plugin = file
 
+    plugin_well_known_path = ctx.actions.declare_file(
+        "{}.{}".format(ctx.attr.name, plugin.extension),
+        sibling = plugin,
+    )
+    ctx.actions.expand_template(
+        template = plugin,
+        output = plugin_well_known_path,
+    )
+
     return [
+        DefaultInfo(
+            files = depset([plugin_well_known_path]),
+        ),
         EcsactCodegenPluginInfo(
             output_extension = ctx.attr.output_extension,
             plugin = plugin,
@@ -69,11 +82,12 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         no_validate_test: Don't create plugin validation test (not recommended)
         **kwargs: Passed to underling cc_binary
     """
+    name_hash = hash(name)
     cc_binary(
-        name = "{}_bin".format(name),
+        name = "{}__bin".format(name_hash),
         srcs = srcs + [
             "@ecsact_runtime//dylib:dylib.cc",
-            ":{}__pn".format(name),
+            ":{}__pn".format(name_hash),
         ],
         deps = deps + [
             "@ecsact_runtime//:dylib",
@@ -86,12 +100,12 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
     )
 
     _cc_ecsact_codegen_plugin_src(
-        name = "{}__pn".format(name),
+        name = "{}__pn".format(name_hash),
         output_extension = output_extension,
     )
 
     _cc_ecsact_codegen_plugin(
         name = name,
-        cc_binary = ":{}_bin".format(name),
+        cc_binary = ":{}__bin".format(name_hash),
         output_extension = output_extension,
     )
