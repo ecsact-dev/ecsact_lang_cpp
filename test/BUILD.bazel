@@ -12,6 +12,7 @@ ecsact_srcs = [
 
 ecsact_codegen(
     name = "ecsact_cc_system_impl_srcs",
+    output_directory = "_ecsact_cc_system_impl_srcs",
     srcs = ecsact_srcs,
     plugins = [
         "@ecsact_lang_cpp//cpp_systems_source_codegen",
@@ -20,6 +21,7 @@ ecsact_codegen(
 
 ecsact_codegen(
     name = "ecsact_cc_hdrs",
+    output_directory = "_ecsact_cc_hdrs",
     srcs = ecsact_srcs,
     plugins = [
         "@ecsact_lang_cpp//cpp_header_codegen",
@@ -33,7 +35,7 @@ cc_library(
     name = "ecsact_cc",
     hdrs = [":ecsact_cc_hdrs"],
     copts = copts,
-    strip_include_prefix = "ecsact_cc_hdrs",
+    strip_include_prefix = "_ecsact_cc_hdrs",
     deps = [
         "@ecsact_lang_cpp//:execution_context",
     ],
@@ -44,7 +46,7 @@ cc_library(
     copts = copts,
     srcs = ["meta_check.cc"],
     deps = [
-        "//:ecsact_cc",
+        ":ecsact_cc",
         "@ecsact_lang_cpp//:type_info",
         "@ecsact_runtime//:lib",
     ],
@@ -55,11 +57,11 @@ cc_binary(
     copts = copts,
     srcs = [
         "system_impls.cc",
-        "//:ecsact_cc_system_impl_srcs",
+        ":ecsact_cc_system_impl_srcs",
     ],
     linkshared = True,
     deps = [
-        "//:ecsact_cc",
+        ":ecsact_cc",
         "@ecsact_runtime//dylib:dynamic",
     ],
 )
