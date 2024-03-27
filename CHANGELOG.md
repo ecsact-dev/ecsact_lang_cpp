@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.3 - 2024-03-27
+#### Miscellaneous Chores
+- use c++20 and add llvm toolchain for linux ci tests (#184) - (f457ba1) - Austin Kelway
+
+- - -
+
 ## 0.3.2 - 2024-03-13
 #### Bug Fixes
 - codegen plugin target/path improvements (#182) - (f357d7f) - Ezekiel Warren
