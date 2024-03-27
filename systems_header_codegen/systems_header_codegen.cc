@@ -50,7 +50,7 @@ static std::string make_package_inc_guard_str(ecsact_package_id package_id) {
 		inc_guard_str.begin(),
 		inc_guard_str.end(),
 		inc_guard_str.begin(),
-		std::toupper
+		[](char c) { return static_cast<char>(std::toupper(c)); }
 	);
 
 	inc_guard_str += "_H";
