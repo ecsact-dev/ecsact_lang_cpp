@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.0 - 2024-04-04
+#### Miscellaneous Chores
+- **(deps)** update dependency bazel to v7.1.1 (#183) - (425b8e5) - renovate[bot]
+- sync with ecsact_common (#185) - (48afe87) - seaubot
+- dev use ecsact_cli + update deps (#186) - (55d0b95) - Ezekiel Warren
+
+- - -
+
 ## 0.3.4 - 2024-04-01
 #### Bug Fixes
 - mark ecsact bazel toolchain as dev dep - (283f682) - Ezekiel Warren
