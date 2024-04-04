@@ -317,18 +317,18 @@ void ecsact_codegen_plugin(
 	ctx.write("#pragma once\n\n");
 
 	fs::path package_hh_path = ecsact_meta_package_file_path(package_id);
-	fs::path pacakge_systems_h_path = package_hh_path;
+	fs::path package_systems_h_path = package_hh_path;
 	package_hh_path.replace_extension(
 		package_hh_path.extension().string() + ".hh"
 	);
-	pacakge_systems_h_path.replace_extension(
-		pacakge_systems_h_path.extension().string() + ".systems.h"
+	package_systems_h_path.replace_extension(
+		package_systems_h_path.extension().string() + ".systems.h"
 	);
 
 	ctx.write("#include <type_traits>\n");
 	ctx.write("#include \"ecsact/cpp/execution_context.hh\"\n");
 	ctx.write("#include \"", package_hh_path.filename().string(), "\"\n");
-	ctx.write("#include \"", pacakge_systems_h_path.filename().string(), "\"\n");
+	ctx.write("#include \"", package_systems_h_path.filename().string(), "\"\n");
 
 	for(auto dep_pkg_id : ecsact::meta::get_dependencies(package_id)) {
 		fs::path dep_pkg_systems_hh_path =

@@ -17,7 +17,8 @@ struct execution_context {
 		const ecsact_system_execution_context* const ctx
 	) {
 		return execution_context{
-			const_cast<ecsact_system_execution_context* const>(ctx)};
+			const_cast<ecsact_system_execution_context* const>(ctx)
+		};
 	}
 
 	template<typename A>
@@ -109,8 +110,8 @@ struct execution_context {
 	}
 
 	execution_context other(ecsact_entity_id entity) {
-		return execution_context{
-			ecsact_system_execution_context_other(_ctx, entity)};
+		return execution_context{ecsact_system_execution_context_other(_ctx, entity)
+		};
 	}
 
 	ecsact_system_like_id id() const {
