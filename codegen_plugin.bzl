@@ -1,13 +1,15 @@
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen_plugin")
 load("@rules_ecsact//ecsact/private:ecsact_codegen_plugin.bzl", "EcsactCodegenPluginInfo")
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
-load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 
 def _cc_ecsact_codegen_plugin_impl(ctx):
-    plugin = None
-    files = ctx.attr.cc_binary[DefaultInfo].files
+    # type: (ctx) -> list
 
-    for file in files.to_list():
+    plugin = None  # type: File | None
+    files = ctx.attr.cc_binary[DefaultInfo].files.to_list()  # type: list[File]
+
+    for file in files:
         if file.extension == "so":
             plugin = file
         if file.extension == "dll":
@@ -17,8 +19,8 @@ def _cc_ecsact_codegen_plugin_impl(ctx):
         "{}.{}".format(ctx.attr.name, plugin.extension),
         sibling = plugin,
     )
-    ctx.actions.expand_template(
-        template = plugin,
+    ctx.actions.symlink(
+        target_file = plugin,
         output = plugin_well_known_path,
     )
 
