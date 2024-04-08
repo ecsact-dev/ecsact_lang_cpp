@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.1 - 2024-04-08
+#### Bug Fixes
+- don't use expand template on binary (#189) - (4e77dbf) - Ezekiel Warren
+
+- - -
+
 ## 0.4.0 - 2024-04-04
 #### Miscellaneous Chores
 - **(deps)** update dependency bazel to v7.1.1 (#183) - (425b8e5) - renovate[bot]
