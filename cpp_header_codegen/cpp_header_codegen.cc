@@ -51,6 +51,23 @@ static bool has_parent_system(ecsact_system_id id) {
 	return parent_id != (ecsact_system_like_id)-1;
 }
 
+static auto cpp_field_type_name(ecsact_field_type field_type) -> std::string {
+	using ecsact::cc_lang_support::cpp_type_str;
+	switch(field_type.kind) {
+		case ECSACT_TYPE_KIND_BUILTIN:
+			return cpp_type_str(field_type.type.builtin);
+		case ECSACT_TYPE_KIND_ENUM:
+			return ecsact_meta_enum_name(field_type.type.enum_id);
+		case ECSACT_TYPE_KIND_FIELD_INDEX: {
+			auto field_index_field_type = ecsact_meta_field_type(
+				field_type.type.field_index.composite_id,
+				field_type.type.field_index.field_id
+			);
+			return cpp_field_type_name(field_index_field_type);
+		}
+	}
+}
+
 static void write_fields(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_composite_id             compo_id,
@@ -68,14 +85,7 @@ static void write_fields(
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
 
 		ctx.write(indentation);
-		switch(field_type.kind) {
-			case ECSACT_TYPE_KIND_BUILTIN:
-				ctx.write(cpp_type_str(field_type.type.builtin));
-				break;
-			case ECSACT_TYPE_KIND_ENUM:
-				ctx.write(ecsact_meta_enum_name(field_type.type.enum_id));
-				break;
-		}
+		ctx.write(cpp_field_type_name(field_type));
 		ctx.write(" "s, field_name);
 
 		if(field_type.length > 1) {

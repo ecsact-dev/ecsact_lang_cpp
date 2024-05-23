@@ -384,6 +384,24 @@ static void write_fields_count_constexpr(
 	);
 }
 
+static auto field_type_to_storage_type( //
+	ecsact_field_type field_type
+) -> ecsact_builtin_type {
+	switch(field_type.kind) {
+		case ECSACT_TYPE_KIND_BUILTIN:
+			return field_type.type.builtin;
+		case ECSACT_TYPE_KIND_ENUM:
+			return ecsact_meta_enum_storage_type(field_type.type.enum_id);
+		case ECSACT_TYPE_KIND_FIELD_INDEX: {
+			auto field_index_field_type = ecsact_meta_field_type(
+				field_type.type.field_index.composite_id,
+				field_type.type.field_index.field_id
+			);
+			return field_type_to_storage_type(field_index_field_type);
+		}
+	}
+}
+
 template<typename CompositeID>
 static void write_fields_info_constexpr(
 	ecsact::codegen_plugin_context& ctx,
@@ -405,20 +423,10 @@ static void write_fields_info_constexpr(
 	ctx.write("\n");
 
 	for(auto field_id : ecsact::meta::get_field_ids(compo_id)) {
-		auto        field_type = ecsact_meta_field_type(compo_id, field_id);
-		auto        field_offset = ecsact_meta_field_offset(compo_id, field_id);
-		std::string field_name = ecsact_meta_field_name(compo_id, field_id);
-		ecsact_builtin_type field_storage_type = {};
-
-		switch(field_type.kind) {
-			case ECSACT_TYPE_KIND_BUILTIN:
-				field_storage_type = field_type.type.builtin;
-				break;
-			case ECSACT_TYPE_KIND_ENUM:
-				field_storage_type =
-					ecsact_meta_enum_storage_type(field_type.type.enum_id);
-				break;
-		}
+		auto field_type = ecsact_meta_field_type(compo_id, field_id);
+		auto field_offset = ecsact_meta_field_offset(compo_id, field_id);
+		auto field_name = std::string{ecsact_meta_field_name(compo_id, field_id)};
+		auto field_storage_type = field_type_to_storage_type(field_type);
 
 		std::string field_storage_type_str =
 			field_builtin_type_enum_name(field_storage_type);

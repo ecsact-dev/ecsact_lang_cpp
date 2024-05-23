@@ -1,14 +1,20 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary")
-load("@rules_ecsact//ecsact:toolchain.bzl", "ecsact_toolchain")
-load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
-load("@ecsact_lang_cpp//bazel:copts.bzl", "copts")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@ecsact_lang_cpp//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
+load("@rules_ecsact//ecsact:toolchain.bzl", "ecsact_toolchain")
 
 ecsact_srcs = [
     "example.ecsact",
     "example_a.ecsact",
     "example_b.ecsact",
 ]
+
+filegroup(
+    name = "ecsact_srcs",
+    visibility = [":__subpackages__"],
+    srcs = ecsact_srcs,
+)
 
 ecsact_codegen(
     name = "ecsact_cc_system_impl_srcs",
