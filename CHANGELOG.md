@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.2 - 2024-05-23
+#### Features
+- generate indexed fields in plugins (#194) - (edb5c0d) - Ezekiel Warren
+
+- - -
+
 ## 0.4.1 - 2024-04-08
 #### Bug Fixes
 - don't use expand template on binary (#189) - (4e77dbf) - Ezekiel Warren
