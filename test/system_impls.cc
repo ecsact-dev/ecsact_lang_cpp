@@ -1,6 +1,6 @@
 #include "example.ecsact.systems.hh"
 
-void esxample::ExampleIndexedAction::impl(context& ctx) {
+void example::ExampleIndexedAction::impl(context& ctx) {
 }
 
 void example::ExampleSystemFromImports::impl(context& ctx) {
