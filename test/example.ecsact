@@ -3,6 +3,21 @@ main package example;
 import pkg.a;
 import pkg.b;
 
+component ExampleContainer {
+  i32 num_index;
+  i32 other_field;
+}
+
+component ExampleIndexedComponent {
+    ExampleContainer.num_index some_indexed_field;
+}
+
+action ExampleIndexedAction {
+    ExampleContainer.num_index some_indexed_field;
+
+    readwrite pkg.a.ExampleA;
+}
+
 system ExampleSystemFromImports {
 	readwrite pkg.a.ExampleA;
 	readwrite pkg.b.ExampleB;

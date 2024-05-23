@@ -1,5 +1,8 @@
 #include "example.ecsact.systems.hh"
 
+void example::ExampleIndexedAction::impl(context& ctx) {
+}
+
 void example::ExampleSystemFromImports::impl(context& ctx) {
 	auto a = ctx.get<pkg::a::ExampleA>();
 	auto b = ctx.get<pkg::b::ExampleB>();
