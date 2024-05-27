@@ -188,12 +188,24 @@ auto block( //
 
 auto block( //
 	ecsact::codegen_plugin_context& ctx,
-	auto&&                          block_prefix,
+	auto&&                          block_head,
 	std::invocable auto&&           block_body_fn
 ) {
-	ctx.write(block_prefix, " ");
+	ctx.write(block_head, " ");
 	auto printer = block_printer{ctx};
 	block_body_fn();
+}
+
+auto block( //
+	ecsact::codegen_plugin_context& ctx,
+	auto&&                          block_head,
+	std::invocable auto&&           block_body_fn,
+	auto&&                          block_tail
+) {
+	ctx.write(block_head, " ");
+	auto printer = block_printer{ctx};
+	block_body_fn();
+	ctx.write(block_tail);
 }
 
 } // namespace ecsact::cpp_codegen_plugin_util
