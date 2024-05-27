@@ -13,15 +13,6 @@ cc_library(
 )
 
 cc_library(
-    name = "type_info",
-    hdrs = ["ecsact/cpp/type_info.hh"],
-    copts = copts,
-    deps = [
-        "@ecsact_runtime//:lib",
-    ],
-)
-
-cc_library(
     name = "support",
     hdrs = ["ecsact/lang-support/lang-cc.hh"],
     copts = copts,

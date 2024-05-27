@@ -33,7 +33,6 @@ ecsact_codegen(
         "@ecsact_lang_cpp//cpp_header_codegen",
         "@ecsact_lang_cpp//cpp_systems_header_codegen",
         "@ecsact_lang_cpp//systems_header_codegen",
-        "@ecsact_lang_cpp//cpp_meta_header_codegen",
     ],
 )
 
@@ -44,17 +43,6 @@ cc_library(
     strip_include_prefix = "_ecsact_cc_hdrs",
     deps = [
         "@ecsact_lang_cpp//:execution_context",
-    ],
-)
-
-cc_library(
-    name = "meta_check",
-    copts = copts,
-    srcs = ["meta_check.cc"],
-    deps = [
-        ":ecsact_cc",
-        "@ecsact_lang_cpp//:type_info",
-        "@ecsact_runtime//:lib",
     ],
 )
 
@@ -75,7 +63,6 @@ cc_binary(
 build_test(
     name = "build_test",
     targets = [
-        ":meta_check",
         ":example_system_impls",
     ],
 )

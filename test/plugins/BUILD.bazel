@@ -3,7 +3,6 @@ load("//bazel:copts.bzl", "copts")
 
 plugins = [
     "cpp_header",
-    "cpp_meta_header",
     "cpp_systems_header",
     "cpp_systems_source",
     "systems_header",
