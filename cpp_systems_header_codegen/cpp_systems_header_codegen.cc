@@ -218,7 +218,7 @@ static auto write_context_other_decl(
 		return;
 	}
 
-	auto avail_indicies_str = comma_delim(
+	auto avail_indices_str = comma_delim(
 		std::views::iota(0UL, assoc_ids.size()) |
 		std::views::transform([](auto i) { return std::to_string(i); })
 	);
@@ -233,8 +233,8 @@ static auto write_context_other_decl(
 			"System Execution Context Misuse",
 			std::format( //
 				"context.other<>() must be called with an index. Available "
-				"indicies for this system are {}",
-				avail_indicies_str
+				"indices for this system are {}",
+				avail_indices_str
 			),
 			"other_context<Index>"
 		);
