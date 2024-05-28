@@ -43,3 +43,27 @@ system ParallelExample(parallel) {
 	readwrite pkg.a.ExampleA;
 }
 
+component AssocFieldsExample {
+  pkg.a.ExampleA.a f1;
+  pkg.b.ExampleB.b f2;
+}
+
+system AssocSystemExample {
+  readwrite pkg.a.ExampleA;
+  readwrite AssocFieldsExample with f1,f2 {
+    readwrite pkg.a.ExampleA;
+  }
+}
+
+system AssocSystemMultiExample {
+  readwrite pkg.a.ExampleA;
+  readwrite AssocFieldsExample {
+    with f1 {
+      readwrite pkg.a.ExampleA;
+    }
+    with f2 {
+      readwrite pkg.a.ExampleA;
+    }
+  }
+}
+

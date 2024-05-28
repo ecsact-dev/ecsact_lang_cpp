@@ -7,8 +7,17 @@
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
+#include "ecsact/cpp_codegen_plugin_util.hh"
 
 namespace fs = std::filesystem;
+using namespace ecsact::cpp_codegen_plugin_util;
+
+using ecsact::cc_lang_support::anonymous_system_name;
+using ecsact::cc_lang_support::c_identifier;
+using ecsact::cc_lang_support::cpp_identifier;
+using ecsact::meta::get_action_ids;
+using ecsact::meta::get_system_generates_ids;
+using ecsact::meta::get_system_ids;
 
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
@@ -182,6 +191,31 @@ static void write_context_has_decl(
 	ctx.write(indentation, "bool has();\n");
 }
 
+static auto write_context_other_decl(
+	ecsact::codegen_plugin_context&     ctx,
+	std::vector<ecsact_system_assoc_id> assoc_ids,
+	std::string_view                    indentation
+) -> void {
+	ctx.write(
+		indentation,
+		"template<std::size_t Index",
+		assoc_ids.size() == 1 ? " = 0" : "",
+		">\n"
+	);
+	ctx.write(indentation, "auto other() -> other_context<Index>;\n");
+
+	for(auto i = 0; assoc_ids.size() > i; ++i) {
+		ctx.write(
+			indentation,
+			"template<> auto other<",
+			i,
+			">() -> other_context<",
+			i,
+			">;\n"
+		);
+	}
+}
+
 static void write_context_action(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_action_id                act_id,
@@ -197,20 +231,10 @@ static void write_context_action(
 	ctx.write(indentation, "}\n");
 }
 
-template<typename SystemLikeID>
-static void write_context_entity(
-	ecsact::codegen_plugin_context& ctx,
-	SystemLikeID                    id,
-	std::string_view                indentation
-) {
-	using ecsact::cc_lang_support::cpp_identifier;
-
-	std::string full_name = ecsact::meta::decl_full_name(id);
-	std::string cpp_full_name = cpp_identifier(full_name);
-
-	ctx.write(indentation, "ecsact_entity_id entity() const {\n");
-	ctx.write(indentation, "\treturn _ctx.entity();\n");
-	ctx.write(indentation, "}\n");
+static void write_context_entity(ecsact::codegen_plugin_context& ctx) {
+	block(ctx, "auto entity() const -> ecsact_entity_id", [&] {
+		ctx.write("return _ctx.entity();\n");
+	});
 }
 
 static void write_context_get_specialize(
@@ -300,17 +324,202 @@ static void write_context_remove_specialize(
 	ctx.write(indentation, "}\n");
 }
 
+static auto write_context_other_specialize(
+	ecsact::codegen_plugin_context& ctx,
+	size_t                          index,
+	ecsact_system_assoc_id          assoc_id
+) -> void {
+	ctx.write("template<> ");
+	auto printer = //
+		method_printer{ctx, std::format("other<{}>", index)} //
+			.return_type(std::format("other_context<{}>", index));
+}
+
+struct context_body_details {
+	std::set<ecsact_component_like_id> add_components;
+	std::set<ecsact_component_like_id> get_components;
+	std::set<ecsact_component_like_id> update_components;
+	std::set<ecsact_component_like_id> remove_components;
+	std::set<ecsact_component_like_id> optional_components;
+
+	static auto from_caps(auto caps) -> context_body_details {
+		auto details = context_body_details{};
+
+		for(auto&& [comp_id, cap] : caps) {
+			if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
+				details.get_components.emplace(comp_id);
+			}
+
+			if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
+				details.update_components.emplace(comp_id);
+			}
+
+			if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
+				details.add_components.emplace(comp_id);
+			}
+
+			if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
+				details.remove_components.emplace(comp_id);
+			}
+
+			if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
+				details.optional_components.emplace(comp_id);
+			}
+		}
+
+		return details;
+	}
+
+	static auto from_assoc_id( //
+		ecsact_system_like_id  sys_like_id,
+		ecsact_system_assoc_id assoc_id
+	) -> context_body_details {
+		auto caps = ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
+		auto details = from_caps(caps);
+		return details;
+	}
+
+	static auto from_sys_like( //
+		ecsact_system_like_id sys_like_id
+	) -> context_body_details {
+		auto caps = ecsact::meta::system_capabilities(sys_like_id);
+		auto details = from_caps(caps);
+		return details;
+	}
+};
+
+/**
+ * Write execution context body methods that are common between systems,
+ * actions, and other (entity association) contexts.
+ */
+static auto write_context_body_common(
+	ecsact::codegen_plugin_context& ctx,
+	std::string                     ctx_name,
+	context_body_details            details
+) -> void {
+	ctx.write("[[no_unique_address]]\n");
+	ctx.write("::ecsact::execution_context _ctx;\n");
+
+	if(!details.get_components.empty()) {
+		write_context_get_decl(ctx, "\t", ctx_name, details.get_components);
+	}
+	if(!details.update_components.empty()) {
+		write_context_update_decl(ctx, "\t", ctx_name, details.update_components);
+	}
+	if(!details.add_components.empty()) {
+		write_context_add_decl(ctx, "\t", ctx_name, details.add_components);
+	}
+	if(!details.remove_components.empty()) {
+		write_context_remove_decl(ctx, "\t", ctx_name, details.remove_components);
+	}
+	if(!details.optional_components.empty()) {
+		write_context_has_decl(ctx, "\t");
+	}
+
+	for(auto get_comp_id : details.get_components) {
+		write_context_get_specialize(ctx, get_comp_id, "\t");
+	}
+
+	for(auto add_comp_id : details.add_components) {
+		write_context_add_specialize(ctx, add_comp_id, "\t");
+	}
+
+	for(auto update_comp_id : details.update_components) {
+		write_context_update_specialize(ctx, update_comp_id, "\t");
+	}
+
+	for(auto remove_comp_id : details.remove_components) {
+		write_context_remove_specialize(ctx, remove_comp_id, "\t");
+	}
+
+	write_context_entity(ctx);
+}
+
+template<typename ID>
+static auto write_sys_context(
+	ecsact::codegen_plugin_context& ctx,
+	ID                              id,
+	auto&&                          extra_body_fn
+) {
+	constexpr bool is_action = std::is_same_v<ecsact_action_id, ID>;
+	auto           sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	std::string    full_name =
+		ecsact_meta_decl_full_name(ecsact_id_cast<ecsact_decl_id>(id));
+
+	if constexpr(!is_action) {
+		if(full_name.empty()) {
+			full_name += ecsact::meta::package_name(ctx.package_id) + ".";
+			full_name += anonymous_system_name(id);
+		}
+	} else {
+		assert(!full_name.empty());
+	}
+
+	auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
+
+	ctx.write("\nstruct ", cpp_identifier(full_name), "::context {\n");
+	if(!assoc_ids.empty()) {
+		ctx.write("\ttemplate<std::size_t Index>\n");
+		ctx.write("\tstruct other_context;\n");
+	}
+
+	for(auto i = 0; assoc_ids.size() > i; ++i) {
+		ctx.write("\n");
+		block(ctx, std::format("template<> struct other_context<{}>", i), [&] {
+			write_context_body_common(
+				ctx,
+				std::format("{} (assoc {})", full_name, i),
+				context_body_details::from_assoc_id(sys_like_id, assoc_ids[i])
+			);
+		});
+	}
+
+	std::optional<ecsact_system_like_id> parent_sys_like_id;
+	if constexpr(!is_action) {
+		parent_sys_like_id = ecsact::meta::get_parent_system_id(id);
+	}
+
+	write_context_body_common(
+		ctx,
+		full_name,
+		context_body_details::from_sys_like(sys_like_id)
+	);
+
+	auto gen_ids = get_system_generates_ids(sys_like_id);
+
+	if(!assoc_ids.empty()) {
+		write_context_other_decl(ctx, assoc_ids, "\t");
+	}
+
+	if(parent_sys_like_id) {
+		auto parent_full_name = ecsact::meta::decl_full_name(*parent_sys_like_id);
+		if(parent_full_name.empty()) {
+			parent_full_name += ecsact::meta::package_name(ctx.package_id) + ".";
+			parent_full_name += anonymous_system_name(*parent_sys_like_id);
+		}
+		auto parent_cpp_full_name = cpp_identifier(parent_full_name);
+		ctx.write("\tconst ", parent_cpp_full_name, "::context parent() const;\n");
+	}
+
+	ctx.write("\n\n");
+
+	for(auto i = 0; assoc_ids.size() > i; ++i) {
+		// ctx.indentation++;
+		// ctx.write("\n");
+		// write_context_other_specialize(ctx, i, assoc_ids[i]);
+		// ctx.indentation--;
+		// ctx.write("\n");
+	}
+
+	extra_body_fn();
+
+	ctx.write("};\n");
+};
+
 void ecsact_codegen_plugin(
 	ecsact_package_id         package_id,
 	ecsact_codegen_write_fn_t write_fn
 ) {
-	using ecsact::cc_lang_support::anonymous_system_name;
-	using ecsact::cc_lang_support::c_identifier;
-	using ecsact::cc_lang_support::cpp_identifier;
-	using ecsact::meta::get_action_ids;
-	using ecsact::meta::get_system_generates_ids;
-	using ecsact::meta::get_system_ids;
-
 	ecsact::codegen_plugin_context ctx{package_id, write_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
@@ -351,160 +560,13 @@ void ecsact_codegen_plugin(
 
 	ctx.write("\nstruct ecsact_system_execution_context;\n");
 
-	auto write_sys_context = [&]<typename ID>(ID id, auto&& extra_body_fn) {
-		constexpr bool is_action = std::is_same_v<ecsact_action_id, ID>;
-		auto           sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
-		std::string    full_name =
-			ecsact_meta_decl_full_name(ecsact_id_cast<ecsact_decl_id>(id));
-
-		if constexpr(!is_action) {
-			if(full_name.empty()) {
-				full_name += ecsact::meta::package_name(ctx.package_id) + ".";
-				full_name += anonymous_system_name(id);
-			}
-		} else {
-			assert(!full_name.empty());
-		}
-
-		using other_contexts_t = std::unordered_map<
-			ecsact_component_like_id,
-			std::unordered_map<
-				ecsact_field_id,
-				std::unordered_map<ecsact_component_like_id, ecsact_system_capability>>>;
-		other_contexts_t other_contexts;
-
-		for(const auto& entry : ecsact::meta::system_capabilities(sys_like_id)) {
-			auto comp_id = entry.first;
-			auto associations =
-				ecsact::meta::system_association_fields(sys_like_id, comp_id);
-			for(auto field_id : associations) {
-				auto assoc_caps = ecsact::meta::system_association_capabilities(
-					sys_like_id,
-					comp_id,
-					field_id
-				);
-				for(auto&& [assoc_comp_id, assoc_cap] : assoc_caps) {
-					other_contexts[comp_id][field_id][assoc_comp_id] = assoc_cap;
-				}
-			}
-		}
-
-		ctx.write("\nstruct ", cpp_identifier(full_name), "::context {\n");
-		if(!other_contexts.empty()) {
-			ctx.write("\ttemplate<typename T>\n");
-			ctx.write("\tstruct other_contexts;\n\n");
-		}
-		ctx.write("\t[[no_unique_address]]\n");
-		ctx.write("\t::ecsact::execution_context _ctx;\n");
-
-		std::optional<ecsact_system_like_id> parent_sys_like_id;
-		if constexpr(!is_action) {
-			parent_sys_like_id = ecsact::meta::get_parent_system_id(id);
-		}
-		auto cap_count = ecsact_meta_system_capabilities_count(sys_like_id);
-
-		std::vector<ecsact_component_like_id> cap_comp_ids;
-		std::vector<ecsact_system_capability> caps;
-		cap_comp_ids.resize(cap_count);
-		caps.resize(cap_count);
-
-		ecsact_meta_system_capabilities(
-			sys_like_id,
-			cap_count,
-			cap_comp_ids.data(),
-			caps.data(),
-			nullptr
-		);
-
-		std::set<ecsact_component_like_id> add_components;
-		std::set<ecsact_component_like_id> get_components;
-		std::set<ecsact_component_like_id> update_components;
-		std::set<ecsact_component_like_id> remove_components;
-		std::set<ecsact_component_like_id> optional_components;
-		auto gen_ids = get_system_generates_ids(sys_like_id);
-
-		for(int i = 0; cap_count > i; ++i) {
-			auto& comp_id = cap_comp_ids[i];
-			auto& cap = caps[i];
-
-			if((cap & ECSACT_SYS_CAP_READONLY) == ECSACT_SYS_CAP_READONLY) {
-				get_components.emplace(comp_id);
-			}
-
-			if((cap & ECSACT_SYS_CAP_WRITEONLY) == ECSACT_SYS_CAP_WRITEONLY) {
-				update_components.emplace(comp_id);
-			}
-
-			if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
-				add_components.emplace(comp_id);
-			}
-
-			if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
-				remove_components.emplace(comp_id);
-			}
-
-			if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
-				optional_components.emplace(comp_id);
-			}
-		}
-
-		if(!get_components.empty()) {
-			write_context_get_decl(ctx, "\t", full_name, get_components);
-		}
-		if(!update_components.empty()) {
-			write_context_update_decl(ctx, "\t", full_name, update_components);
-		}
-		if(!add_components.empty()) {
-			write_context_add_decl(ctx, "\t", full_name, add_components);
-		}
-		if(!remove_components.empty()) {
-			write_context_remove_decl(ctx, "\t", full_name, remove_components);
-		}
-		if(!optional_components.empty()) {
-			write_context_has_decl(ctx, "\t");
-		}
-
-		if(parent_sys_like_id) {
-			auto parent_full_name = ecsact::meta::decl_full_name(*parent_sys_like_id);
-			if(parent_full_name.empty()) {
-				parent_full_name += ecsact::meta::package_name(ctx.package_id) + ".";
-				parent_full_name += anonymous_system_name(*parent_sys_like_id);
-			}
-			auto parent_cpp_full_name = cpp_identifier(parent_full_name);
-			ctx
-				.write("\tconst ", parent_cpp_full_name, "::context parent() const;\n");
-		}
-
-		ctx.write("\n\n");
-
-		for(auto get_comp_id : get_components) {
-			write_context_get_specialize(ctx, get_comp_id, "\t");
-		}
-
-		for(auto add_comp_id : add_components) {
-			write_context_add_specialize(ctx, add_comp_id, "\t");
-		}
-
-		for(auto update_comp_id : update_components) {
-			write_context_update_specialize(ctx, update_comp_id, "\t");
-		}
-
-		for(auto remove_comp_id : remove_components) {
-			write_context_remove_specialize(ctx, remove_comp_id, "\t");
-		}
-
-		write_context_entity(ctx, sys_like_id, "\t");
-
-		extra_body_fn();
-
-		ctx.write("};\n");
-	};
-
 	for(auto sys_id : get_system_ids(ctx.package_id)) {
-		write_sys_context(sys_id, [] {});
+		write_sys_context(ctx, sys_id, [] {});
 	}
 
 	for(auto act_id : get_action_ids(ctx.package_id)) {
-		write_sys_context(act_id, [&] { write_context_action(ctx, act_id, "\t"); });
+		write_sys_context(ctx, act_id, [&] {
+			write_context_action(ctx, act_id, "\t");
+		});
 	}
 }

@@ -6,11 +6,11 @@ module(
 
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.6.1")
-bazel_dep(name = "ecsact_runtime", version = "0.6.2")
+bazel_dep(name = "ecsact_runtime", version = "0.6.4")
 bazel_dep(name = "rules_ecsact", version = "0.5.2")
 bazel_dep(name = "ecsact_codegen", version = "0.2.0")
 
-bazel_dep(name = "ecsact_cli", version = "0.3.7", dev_dependency = True)
+bazel_dep(name = "ecsact_cli", version = "0.3.9", dev_dependency = True)
 bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2", dev_dependency = True)
 bazel_dep(name = "boost.process", version = "1.83.0.bzl.2", dev_dependency = True)
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
@@ -27,6 +27,21 @@ git_override(
     module_name = "libarchive",
     commit = "7c331f92acea5243c195cdc6fb46ecfa11ce1ce2",
     remote = "https://github.com/zaucy/libarchive.git",
+)
+
+local_path_override(
+    module_name = "ecsact_runtime",
+    path = "../ecsact_runtime",
+)
+
+local_path_override(
+    module_name = "ecsact_interpret",
+    path = "../ecsact_interpret",
+)
+
+local_path_override(
+    module_name = "ecsact_cli",
+    path = "../ecsact_cli",
 )
 
 ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact", dev_dependency = True)

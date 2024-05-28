@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include "ecsact/runtime/dynamic.h"
+#include "ecsact/runtime/common.h"
 
 struct ecsact_system_execution_context;
 
@@ -13,16 +14,16 @@ struct execution_context {
 	/**
 	 * Safe way to create a readonly execution context
 	 */
-	static const execution_context make_readonly(
+	static ECSACT_ALWAYS_INLINE auto make_readonly( //
 		const ecsact_system_execution_context* const ctx
-	) {
+	) -> const execution_context {
 		return execution_context{
 			const_cast<ecsact_system_execution_context* const>(ctx)
 		};
 	}
 
 	template<typename A>
-	A action() const {
+	ECSACT_ALWAYS_INLINE auto action() const -> A {
 		A action;
 		ecsact_system_execution_context_action(_ctx, &action);
 		return action;
@@ -30,7 +31,7 @@ struct execution_context {
 
 	template<typename C>
 		requires(!std::is_empty_v<C>)
-	C get() const {
+	ECSACT_ALWAYS_INLINE auto get() const -> C {
 		C comp;
 		ecsact_system_execution_context_get(
 			_ctx,
@@ -42,7 +43,7 @@ struct execution_context {
 
 	template<typename C>
 		requires(!std::is_empty_v<C>)
-	void update(const C& updated_component) {
+	ECSACT_ALWAYS_INLINE auto update(const C& updated_component) -> void {
 		ecsact_system_execution_context_update(
 			_ctx,
 			ecsact_id_cast<ecsact_component_like_id>(C::id),
@@ -51,7 +52,7 @@ struct execution_context {
 	}
 
 	template<typename C>
-	bool has() const {
+	ECSACT_ALWAYS_INLINE auto has() -> bool const {
 		return ecsact_system_execution_context_has(
 			_ctx,
 			ecsact_id_cast<ecsact_component_like_id>(C::id)
@@ -60,7 +61,7 @@ struct execution_context {
 
 	template<typename C>
 		requires(!std::is_empty_v<C>)
-	void add(const C& new_component) {
+	ECSACT_ALWAYS_INLINE auto add(const C& new_component) -> void {
 		ecsact_system_execution_context_add(
 			_ctx,
 			ecsact_id_cast<ecsact_component_like_id>(C::id),
@@ -70,7 +71,7 @@ struct execution_context {
 
 	template<typename C>
 		requires(std::is_empty_v<C>)
-	void add() {
+	ECSACT_ALWAYS_INLINE auto add() -> void {
 		ecsact_system_execution_context_add(
 			_ctx,
 			ecsact_id_cast<ecsact_component_like_id>(C::id),
@@ -79,7 +80,7 @@ struct execution_context {
 	}
 
 	template<typename C>
-	void remove() {
+	ECSACT_ALWAYS_INLINE auto remove() -> void {
 		ecsact_system_execution_context_remove(
 			_ctx,
 			ecsact_id_cast<ecsact_component_like_id>(C::id)
@@ -87,7 +88,7 @@ struct execution_context {
 	}
 
 	template<typename... C>
-	void generate(C&&... components) {
+	ECSACT_ALWAYS_INLINE auto generate(C&&... components) -> void {
 		ecsact_component_id component_ids[]{C::id...};
 		const void*         components_data[]{&components...};
 
@@ -99,26 +100,29 @@ struct execution_context {
 		);
 	}
 
-	const execution_context parent() const {
+	ECSACT_ALWAYS_INLINE auto parent() const -> const execution_context {
 		return execution_context::make_readonly(
 			ecsact_system_execution_context_parent(_ctx)
 		);
 	}
 
-	bool same(const execution_context& other) const {
+	ECSACT_ALWAYS_INLINE auto same(const execution_context& other) const -> bool {
 		return ecsact_system_execution_context_same(_ctx, other._ctx);
 	}
 
-	execution_context other(ecsact_entity_id entity) {
-		return execution_context{ecsact_system_execution_context_other(_ctx, entity)
+	ECSACT_ALWAYS_INLINE auto other( //
+		ecsact_system_assoc_id assoc_id
+	) -> execution_context {
+		return execution_context{
+			ecsact_system_execution_context_other(_ctx, assoc_id)
 		};
 	}
 
-	ecsact_system_like_id id() const {
+	ECSACT_ALWAYS_INLINE auto id() const -> ecsact_system_like_id {
 		return ecsact_system_execution_context_id(_ctx);
 	}
 
-	ecsact_entity_id entity() const {
+	ECSACT_ALWAYS_INLINE auto entity() const -> ecsact_entity_id {
 		return ecsact_system_execution_context_entity(_ctx);
 	}
 };
