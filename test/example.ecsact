@@ -49,7 +49,7 @@ component AssocFieldsExample {
 }
 
 system AssocSystemExample {
-  readwrite pkg.a.ExampleA;
+  readwrite pkg.b.ExampleB;
   readwrite AssocFieldsExample with f1,f2 {
     readwrite pkg.a.ExampleA;
   }
@@ -62,7 +62,7 @@ system AssocSystemMultiExample {
       readwrite pkg.a.ExampleA;
     }
     with f2 {
-      readwrite pkg.a.ExampleA;
+      readwrite pkg.b.ExampleB;
     }
   }
 }

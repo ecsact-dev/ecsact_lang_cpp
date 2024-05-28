@@ -174,7 +174,7 @@ public:
 		}
 		disposed = true;
 		ctx.indentation -= 1;
-		ctx.write("\n}\n\n");
+		ctx.write("\n}");
 	}
 };
 
@@ -206,6 +206,20 @@ auto block( //
 	auto printer = block_printer{ctx};
 	block_body_fn();
 	ctx.write(block_tail);
+}
+
+auto comma_delim(auto&& range) -> std::string {
+	auto result = std::string{};
+
+	for(auto str : range) {
+		result += str + ", ";
+	}
+
+	if(result.ends_with(", ")) {
+		result = result.substr(0, result.size() - 2);
+	}
+
+	return result;
 }
 
 } // namespace ecsact::cpp_codegen_plugin_util
