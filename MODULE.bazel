@@ -29,21 +29,6 @@ git_override(
     remote = "https://github.com/zaucy/libarchive.git",
 )
 
-local_path_override(
-    module_name = "ecsact_runtime",
-    path = "../ecsact_runtime",
-)
-
-local_path_override(
-    module_name = "ecsact_interpret",
-    path = "../ecsact_interpret",
-)
-
-local_path_override(
-    module_name = "ecsact_cli",
-    path = "../ecsact_cli",
-)
-
 ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact", dev_dependency = True)
 ecsact.toolchain(use_ecsact_cli = True)
 use_repo(ecsact, "ecsact_toolchain")
