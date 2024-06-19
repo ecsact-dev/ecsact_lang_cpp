@@ -5,6 +5,7 @@
 #include <string_view>
 #include <ranges>
 #include <set>
+#include <format>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <algorithm>
+#include <format>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
