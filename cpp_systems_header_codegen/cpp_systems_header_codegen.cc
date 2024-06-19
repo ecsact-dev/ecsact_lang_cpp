@@ -301,14 +301,14 @@ static void write_context_add_specialize(
 				cpp_full_name
 			),
 			[&] {
-				ctx.write(std::format("_ctx.add<{}>(new_component)", cpp_full_name));
+				ctx.write(std::format("_ctx.add<{}>(new_component);", cpp_full_name));
 			}
 		);
 	} else {
 		block(
 			ctx,
 			std::format("template<> auto add<{}>() -> void", cpp_full_name),
-			[&] { ctx.write(std::format("_ctx.add<{}>()", cpp_full_name)); }
+			[&] { ctx.write(std::format("_ctx.add<{}>();", cpp_full_name)); }
 		);
 	}
 
@@ -346,9 +346,13 @@ static auto write_context_remove_specialize(
 	auto full_name = ecsact_meta_decl_full_name(decl_id);
 	auto cpp_full_name = cpp_identifier(full_name);
 
-	block(ctx, std::format("template<> auto remove<{}>()", cpp_full_name), [&] {
-		ctx.write(std::format("return _ctx.remove<{}>();\n", cpp_full_name));
-	});
+	block(
+		ctx,
+		std::format("template<> auto remove<{}>() -> void", cpp_full_name),
+		[&] {
+			ctx.write(std::format("return _ctx.remove<{}>();\n", cpp_full_name));
+		}
+	);
 
 	ctx.write("\n");
 }
