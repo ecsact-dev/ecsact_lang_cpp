@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.4 - 2024-06-19
+#### Features
+- support new assoc api in C++ codegen (#196) - (a1e518f) - Ezekiel Warren
+- remove unused meta header codegen plugin - (8d70238) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update dependency ecsact_cli to v0.3.11 (#146) - (bba404f) - renovate[bot]
+- remove libarchive git_override and update cli (#198) - (d8e504f) - Austin Kelway
+- sync with ecsact_common (#187) - (89cec22) - seaubot
+
+- - -
+
 ## 0.4.3 - 2024-05-27
 #### Features
 - add tail to block generation util (#195) - (0084f28) - Ezekiel Warren
