@@ -3,7 +3,8 @@
 #include <cassert>
 #include <cstring>
 #include <algorithm>
-#include "ecsact/runtime/meta.h"
+#include <format>
+#include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -73,8 +74,21 @@ static void write_system_impl_fn_decl(
 
 	auto c_impl_fn_name = c_identifier(full_name);
 
+	ctx.write("\n");
+
+	auto assoc_ids = ecsact::meta::system_assoc_ids(id);
+
+	for(auto i = 0; assoc_ids.size() > i; ++i) {
+		auto c_impl_assoc_id_name = std::format("{}__{}", c_impl_fn_name, i);
+		ctx.write(std::format(
+			"ECSACT_EXTERN\n"
+			"ECSACT_EXPORT(\"{0}\")\n"
+			"const ecsact_system_assoc_id {0};\n",
+			c_impl_assoc_id_name
+		));
+	}
+
 	ctx.write(
-		"\n",
 		"ECSACT_EXTERN\n",
 		"ECSACT_EXPORT(\"",
 		c_impl_fn_name,
