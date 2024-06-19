@@ -21,14 +21,6 @@ git_override(
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
-# TODO: https://github.com/bazelbuild/bazel-central-registry/pull/1916
-bazel_dep(name = "libarchive", version = "3.7.3")
-git_override(
-    module_name = "libarchive",
-    commit = "7c331f92acea5243c195cdc6fb46ecfa11ce1ce2",
-    remote = "https://github.com/zaucy/libarchive.git",
-)
-
 ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact", dev_dependency = True)
 ecsact.toolchain(use_ecsact_cli = True)
 use_repo(ecsact, "ecsact_toolchain")
