@@ -297,7 +297,7 @@ static void write_context_add_specialize(
 		block(
 			ctx,
 			std::format(
-				"template<> auto add<{0}>(const {0}& new_component)",
+				"template<> auto add<{0}>(const {0}& new_component) -> void",
 				cpp_full_name
 			),
 			[&] {
@@ -305,9 +305,11 @@ static void write_context_add_specialize(
 			}
 		);
 	} else {
-		block(ctx, std::format("template<> auto add<{}>()", cpp_full_name), [&] {
-			ctx.write(std::format("_ctx.add<{}>()", cpp_full_name));
-		});
+		block(
+			ctx,
+			std::format("template<> auto add<{}>() -> void", cpp_full_name),
+			[&] { ctx.write(std::format("_ctx.add<{}>()", cpp_full_name)); }
+		);
 	}
 
 	ctx.write("\n");
