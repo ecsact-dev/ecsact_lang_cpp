@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include "ecsact/runtime/common.h"
+#include "ecsact/runtime/meta.h"
 #include "ecsact/runtime/definitions.h"
 
 namespace ecsact::cc_lang_support {
@@ -67,6 +69,24 @@ constexpr auto cpp_type_str(ecsact_builtin_type type) {
 			return "float";
 		case ECSACT_ENTITY_TYPE:
 			return "::ecsact_entity_id";
+	}
+}
+
+ECSACT_ALWAYS_INLINE auto cpp_field_type_name( //
+	ecsact_field_type field_type
+) -> std::string {
+	switch(field_type.kind) {
+		case ECSACT_TYPE_KIND_BUILTIN:
+			return cpp_type_str(field_type.type.builtin);
+		case ECSACT_TYPE_KIND_ENUM:
+			return ecsact_meta_enum_name(field_type.type.enum_id);
+		case ECSACT_TYPE_KIND_FIELD_INDEX: {
+			auto field_index_field_type = ecsact_meta_field_type(
+				field_type.type.field_index.composite_id,
+				field_type.type.field_index.field_id
+			);
+			return cpp_field_type_name(field_index_field_type);
+		}
 	}
 }
 
