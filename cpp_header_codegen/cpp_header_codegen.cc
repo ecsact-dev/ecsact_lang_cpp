@@ -140,6 +140,24 @@ static void write_system_struct(
 	}
 }
 
+template<typename CompositeID>
+static auto has_assoc_fields(CompositeID compo_id) -> bool {
+	for(auto field_id : ecsact::meta::get_field_ids(compo_id)) {
+		auto field_type = ecsact::meta::get_field_type(compo_id, field_id);
+		if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN) {
+			if(field_type.type.builtin == ECSACT_ENTITY_TYPE) {
+				return true;
+			}
+		}
+
+		if(field_type.kind == ECSACT_TYPE_KIND_FIELD_INDEX) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ecsact_codegen_plugin(
 	ecsact_package_id         package_id,
 	ecsact_codegen_write_fn_t write_fn
@@ -185,6 +203,11 @@ void ecsact_codegen_plugin(
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
 		ctx.write("struct "s, ecsact_meta_component_name(comp_id), " {\n"s);
 		ctx.write("\tstatic constexpr bool transient = false;\n");
+		ctx.write(
+			"\tstatic constexpr bool has_assoc_fields = ",
+			has_assoc_fields(comp_id) ? "true" : "false",
+			";\n"
+		);
 		write_constexpr_id(ctx, "ecsact_component_id", comp_id, "\t");
 		write_fields(ctx, compo_id, "\t"s);
 		ctx.write("};\n"s);
@@ -194,6 +217,11 @@ void ecsact_codegen_plugin(
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
 		ctx.write("struct "s, ecsact_meta_transient_name(comp_id), " {\n"s);
 		ctx.write("\tstatic constexpr bool transient = true;\n");
+		ctx.write(
+			"\tstatic constexpr bool has_assoc_fields = ",
+			has_assoc_fields(comp_id) ? "true" : "false",
+			";\n"
+		);
 		write_constexpr_id(ctx, "ecsact_transient_id", comp_id, "\t");
 		write_fields(ctx, compo_id, "\t"s);
 		ctx.write("};\n"s);
@@ -202,6 +230,11 @@ void ecsact_codegen_plugin(
 	for(auto action_id : get_action_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(action_id);
 		ctx.write("struct "s, ecsact_meta_action_name(action_id), " {\n"s);
+		ctx.write(
+			"\tstatic constexpr bool has_assoc_fields = ",
+			has_assoc_fields(action_id) ? "true" : "false",
+			";\n"
+		);
 		write_constexpr_id(ctx, "ecsact_action_id", compo_id, "\t");
 		for(auto child_system_id : get_child_system_ids(action_id)) {
 			write_system_struct(ctx, child_system_id, "\t");
