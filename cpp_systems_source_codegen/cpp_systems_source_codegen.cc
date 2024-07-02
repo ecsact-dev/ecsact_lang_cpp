@@ -11,13 +11,14 @@ constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
 
 void ecsact_codegen_plugin(
-	ecsact_package_id         package_id,
-	ecsact_codegen_write_fn_t write_fn
+	ecsact_package_id          package_id,
+	ecsact_codegen_write_fn_t  write_fn,
+	ecsact_codegen_report_fn_t report_fn
 ) {
 	using ecsact::cc_lang_support::c_identifier;
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::get_all_system_like_ids;
-	ecsact::codegen_plugin_context ctx{package_id, write_fn};
+	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 
