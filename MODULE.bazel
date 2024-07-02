@@ -10,7 +10,7 @@ bazel_dep(name = "ecsact_runtime", version = "0.6.6")
 bazel_dep(name = "rules_ecsact", version = "0.5.2")
 bazel_dep(name = "ecsact_codegen", version = "0.3.0")
 
-bazel_dep(name = "ecsact_cli", version = "0.3.11", dev_dependency = True)
+bazel_dep(name = "ecsact_cli", version = "0.3.12", dev_dependency = True)
 bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2", dev_dependency = True)
 bazel_dep(name = "boost.process", version = "1.83.0.bzl.2", dev_dependency = True)
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
@@ -19,12 +19,6 @@ git_override(
     module_name = "hedron_compile_commands",
     commit = "204aa593e002cbd177d30f11f54cff3559110bb9",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-)
-
-
-local_path_override(
-    module_name = "ecsact_cli",
-    path = "../ecsact_cli",
 )
 
 ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact", dev_dependency = True)
