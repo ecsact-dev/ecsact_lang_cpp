@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.5 - 2024-07-02
+#### Bug Fixes
+- add missing return type in context.remove (#200) - (02f96d9) - Ezekiel Warren
+- add missing return type in context.add (#199) - (551f476) - Ezekiel Warren
+#### Features
+- add constexpr for components with assoc fields (#204) - (c067502) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update dependency ecsact_runtime to v0.6.6 (#201) - (e76f35f) - renovate[bot]
+- update codegen plugin interface (#207) - (92f7c73) - Ezekiel Warren
+- sync with ecsact_common (#203) - (ac1290a) - seaubot
+- sync with ecsact_common (#202) - (381c353) - seaubot
+
+- - -
+
 ## 0.4.4 - 2024-06-19
 #### Features
 - support new assoc api in C++ codegen (#196) - (a1e518f) - Ezekiel Warren
