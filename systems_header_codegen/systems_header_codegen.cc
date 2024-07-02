@@ -100,12 +100,13 @@ static void write_system_impl_fn_decl(
 }
 
 void ecsact_codegen_plugin(
-	ecsact_package_id         package_id,
-	ecsact_codegen_write_fn_t write_fn
+	ecsact_package_id          package_id,
+	ecsact_codegen_write_fn_t  write_fn,
+	ecsact_codegen_report_fn_t report_fn
 ) {
 	using namespace std::string_literals;
 
-	ecsact::codegen_plugin_context ctx{package_id, write_fn};
+	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
 	const auto inc_guard_str = make_package_inc_guard_str(package_id);
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);

@@ -562,10 +562,11 @@ static auto write_sys_context(
 };
 
 void ecsact_codegen_plugin(
-	ecsact_package_id         package_id,
-	ecsact_codegen_write_fn_t write_fn
+	ecsact_package_id          package_id,
+	ecsact_codegen_write_fn_t  write_fn,
+	ecsact_codegen_report_fn_t report_fn
 ) {
-	ecsact::codegen_plugin_context ctx{package_id, write_fn};
+	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 	ctx.write("#pragma once\n\n");
