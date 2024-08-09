@@ -106,7 +106,7 @@ void ecsact_codegen_plugin(
 ) {
 	using namespace std::string_literals;
 
-	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
+	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 	const auto inc_guard_str = make_package_inc_guard_str(package_id);
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);

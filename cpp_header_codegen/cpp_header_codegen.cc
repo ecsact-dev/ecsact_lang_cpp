@@ -173,7 +173,7 @@ void ecsact_codegen_plugin(
 	using ecsact::meta::get_system_ids;
 	using ecsact::meta::get_transient_ids;
 
-	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
+	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 	ctx.write("#pragma once\n\n");
