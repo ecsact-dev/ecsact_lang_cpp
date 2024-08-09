@@ -566,7 +566,7 @@ void ecsact_codegen_plugin(
 	ecsact_codegen_write_fn_t  write_fn,
 	ecsact_codegen_report_fn_t report_fn
 ) {
-	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
+	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 	ctx.write("#pragma once\n\n");

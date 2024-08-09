@@ -18,7 +18,7 @@ void ecsact_codegen_plugin(
 	using ecsact::cc_lang_support::c_identifier;
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::get_all_system_like_ids;
-	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
+	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 
