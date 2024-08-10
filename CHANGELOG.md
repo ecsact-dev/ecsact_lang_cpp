@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.6 - 2024-08-10
+#### Miscellaneous Chores
+- **(deps)** update dependency ecsact_cli to v0.3.15 (#212) - (7d900a5) - renovate[bot]
+- **(deps)** update dependency ecsact_cli to v0.3.14 (#211) - (c04234c) - renovate[bot]
+- **(deps)** update dependency rules_ecsact to v0.5.5 (#209) - (1733a5f) - renovate[bot]
+- **(deps)** update ecsact repositories (#208) - (81a00f4) - renovate[bot]
+- refactor to use new codegen api (#213) - (6a6ac7e) - Ezekiel Warren
+
+- - -
+
 ## 0.4.5 - 2024-07-02
 #### Bug Fixes
 - add missing return type in context.remove (#200) - (02f96d9) - Ezekiel Warren
