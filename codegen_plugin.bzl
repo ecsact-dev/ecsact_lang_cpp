@@ -47,7 +47,7 @@ _generated_src = """
 #include "ecsact/codegen/plugin.h"
 
 const char* ecsact_codegen_plugin_name() {{
-	return "{output_extension}";
+    return "{output_extension}";
 }}
 """
 
@@ -73,7 +73,7 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
     """Create ecsact codegen plugin with C++
 
     NOTE: ecsact_codegen_plugin_name() is automatically generated for you based
-          on the `output_extension` attribute.
+    on the `output_extension` attribute.
 
     Args:
         name: Passed to underling cc_binary
