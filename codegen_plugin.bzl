@@ -55,6 +55,8 @@ const char* ecsact_codegen_plugin_name() {{
 
 def _cc_ecsact_codegen_plugin_src_impl(ctx):
     output_cc_src = ctx.actions.declare_file("{}.plugin_name.cc".format(ctx.attr.name))
+    if not ctx.attr.output_extension and len(ctx.attr.outputs) != 0
+        fail("You cannot use both output extension and outputs")
     if ctx.attr.output_extension!= None: 
         ctx.actions.write(
             output = output_cc_src,
@@ -88,8 +90,8 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         srcs: Passed to underling cc_binary
         deps: Passed to underling cc_binary
         defines: Passed to underling cc_binary
-        output_extension: File extension the plugin writes to
-        outputs: The well known name filename to output
+        output_extension: File extension the plugin writes to. Cannot be used with outputs
+        outputs: A list of well known filenames to output. Cannot be used with output_extension
         no_validate_test: Don't create plugin validation test (not recommended)
         **kwargs: Passed to underling cc_binary
     """
