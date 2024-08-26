@@ -76,7 +76,7 @@ _cc_ecsact_codegen_plugin_src = rule(
     },
 )
 
-def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no_validate_test = False, output_extension = None, outputs = None, **kwargs):
+def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no_validate_test = False, output_extension = None, outputs = [], **kwargs):
     """Create ecsact codegen plugin with C++
 
     NOTE: ecsact_codegen_plugin_name() is automatically generated for you based
@@ -92,7 +92,7 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         no_validate_test: Don't create plugin validation test (not recommended)
         **kwargs: Passed to underling cc_binary
     """
-    if not ctx.attr.output_extension and len(ctx.attr.outputs) != 0:
+    if output_extension and len(outputs) != 0:
         fail("You cannot use both output extension and outputs")
 
     name_hash = hash(name)
