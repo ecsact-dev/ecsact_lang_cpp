@@ -5,7 +5,6 @@ load("@rules_ecsact//ecsact/private:ecsact_codegen_plugin.bzl", "EcsactCodegenPl
 
 def _cc_ecsact_codegen_plugin_impl(ctx):
     # type: (ctx) -> list
-
     plugin = None  # type: File | None
     files = ctx.attr.cc_binary[DefaultInfo].files.to_list()  # type: list[File]
 
@@ -55,8 +54,6 @@ const char* ecsact_codegen_plugin_name() {{
 
 def _cc_ecsact_codegen_plugin_src_impl(ctx):
     output_cc_src = ctx.actions.declare_file("{}.plugin_name.cc".format(ctx.attr.name))
-    if not ctx.attr.output_extension and len(ctx.attr.outputs) != 0:
-        fail("You cannot use both output extension and outputs")
     if ctx.attr.output_extension!= None: 
         ctx.actions.write(
             output = output_cc_src,
@@ -95,6 +92,9 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         no_validate_test: Don't create plugin validation test (not recommended)
         **kwargs: Passed to underling cc_binary
     """
+    if not ctx.attr.output_extension and len(ctx.attr.outputs) != 0:
+        fail("You cannot use both output extension and outputs")
+
     name_hash = hash(name)
     cc_binary(
         name = "{}__bin".format(name_hash),
