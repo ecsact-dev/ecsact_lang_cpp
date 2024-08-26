@@ -5,7 +5,6 @@ load("@rules_ecsact//ecsact/private:ecsact_codegen_plugin.bzl", "EcsactCodegenPl
 
 def _cc_ecsact_codegen_plugin_impl(ctx):
     # type: (ctx) -> list
-
     plugin = None  # type: File | None
     files = ctx.attr.cc_binary[DefaultInfo].files.to_list()  # type: list[File]
 
@@ -30,6 +29,7 @@ def _cc_ecsact_codegen_plugin_impl(ctx):
         ),
         EcsactCodegenPluginInfo(
             output_extension = ctx.attr.output_extension,
+            outputs = ctx.attr.outputs,
             plugin = plugin,
             data = [plugin],
         ),
@@ -39,7 +39,8 @@ _cc_ecsact_codegen_plugin = rule(
     implementation = _cc_ecsact_codegen_plugin_impl,
     attrs = {
         "cc_binary": attr.label(mandatory = True),
-        "output_extension": attr.string(mandatory = True),
+        "output_extension": attr.string(mandatory = False),
+        "outputs": attr.string_list(mandatory = False)
     },
 )
 
@@ -53,10 +54,16 @@ const char* ecsact_codegen_plugin_name() {{
 
 def _cc_ecsact_codegen_plugin_src_impl(ctx):
     output_cc_src = ctx.actions.declare_file("{}.plugin_name.cc".format(ctx.attr.name))
-    ctx.actions.write(
-        output = output_cc_src,
-        content = _generated_src.format(output_extension = ctx.attr.output_extension),
-    )
+    if ctx.attr.output_extension!= None: 
+        ctx.actions.write(
+            output = output_cc_src,
+            content = _generated_src.format(output_extension = ctx.attr.output_extension),
+        )
+    else: 
+        ctx.actions.write(
+            output = output_cc_src,
+            content = _generated_src.format(output_extension = ctx.attr.name),
+        )
 
     return [
         DefaultInfo(files = depset([output_cc_src])),
@@ -65,11 +72,11 @@ def _cc_ecsact_codegen_plugin_src_impl(ctx):
 _cc_ecsact_codegen_plugin_src = rule(
     implementation = _cc_ecsact_codegen_plugin_src_impl,
     attrs = {
-        "output_extension": attr.string(mandatory = True),
+        "output_extension": attr.string(mandatory = False),
     },
 )
 
-def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no_validate_test = False, output_extension = None, **kwargs):
+def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no_validate_test = False, output_extension = None, outputs = [], **kwargs):
     """Create ecsact codegen plugin with C++
 
     NOTE: ecsact_codegen_plugin_name() is automatically generated for you based
@@ -80,10 +87,14 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         srcs: Passed to underling cc_binary
         deps: Passed to underling cc_binary
         defines: Passed to underling cc_binary
-        output_extension: File extension the plugin writes to
+        output_extension: File extension the plugin writes to. Cannot be used with outputs
+        outputs: A list of well known filenames to output. Cannot be used with output_extension
         no_validate_test: Don't create plugin validation test (not recommended)
         **kwargs: Passed to underling cc_binary
     """
+    if output_extension and len(outputs) != 0:
+        fail("You cannot use both output extension and outputs")
+
     name_hash = hash(name)
     cc_binary(
         name = "{}__bin".format(name_hash),
@@ -101,13 +112,19 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         **kwargs
     )
 
-    _cc_ecsact_codegen_plugin_src(
-        name = "{}__src".format(name_hash),
-        output_extension = output_extension,
-    )
+    if(output_extension != None):
+        _cc_ecsact_codegen_plugin_src(
+            name = "{}__src".format(name_hash),
+            output_extension = output_extension,
+        )
+    else:
+        _cc_ecsact_codegen_plugin_src(
+            name = "{}__src".format(name_hash),
+        )
 
     _cc_ecsact_codegen_plugin(
         name = name,
         cc_binary = ":{}__bin".format(name_hash),
         output_extension = output_extension,
+        outputs = outputs
     )
