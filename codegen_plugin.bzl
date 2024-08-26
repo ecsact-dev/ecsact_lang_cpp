@@ -55,7 +55,7 @@ const char* ecsact_codegen_plugin_name() {{
 
 def _cc_ecsact_codegen_plugin_src_impl(ctx):
     output_cc_src = ctx.actions.declare_file("{}.plugin_name.cc".format(ctx.attr.name))
-    if not ctx.attr.output_extension and len(ctx.attr.outputs) != 0
+    if not ctx.attr.output_extension and len(ctx.attr.outputs) != 0:
         fail("You cannot use both output extension and outputs")
     if ctx.attr.output_extension!= None: 
         ctx.actions.write(
