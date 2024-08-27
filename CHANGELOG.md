@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.7 - 2024-08-27
+#### Features
+- Allow explicit file name outputs vs just the extension (#216) - (c51fc49) - Austin Kelway
+#### Miscellaneous Chores
+- **(deps)** update dependency ecsact_runtime to v0.6.8 (#215) - (8dba3e8) - renovate[bot]
+- **(deps)** update dependency rules_ecsact to v0.5.6 (#214) - (ecbcb2c) - renovate[bot]
+- sync with ecsact_common (#206) - (0c53919) - seaubot
+
+- - -
+
 ## 0.4.6 - 2024-08-10
 #### Miscellaneous Chores
 - **(deps)** update dependency ecsact_cli to v0.3.15 (#212) - (7d900a5) - renovate[bot]
