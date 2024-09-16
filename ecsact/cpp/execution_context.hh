@@ -60,6 +60,11 @@ struct execution_context {
 	}
 
 	template<typename C>
+	ECSACT_ALWAYS_INLINE auto stream_toggle(bool enable_stream_data) -> void {
+		ecsact_system_execution_context_stream_toggle(_ctx, C::id);
+	}
+
+	template<typename C>
 		requires(!std::is_empty_v<C>)
 	ECSACT_ALWAYS_INLINE auto add(const C& new_component) -> void {
 		ecsact_system_execution_context_add(
