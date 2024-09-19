@@ -455,7 +455,7 @@ struct context_body_details {
 				details.optional_components.emplace(comp_id);
 			}
 
-			if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_STREAM_TOGGLE) {
+			if((cap & ECSACT_SYS_CAP_STREAM_TOGGLE) == ECSACT_SYS_CAP_STREAM_TOGGLE) {
 				details.stream_components.emplace(comp_id);
 			}
 		}
