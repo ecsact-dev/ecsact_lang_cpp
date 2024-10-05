@@ -64,17 +64,17 @@ static auto write_static_assert_codegen_error(
 ) -> void {
 	word_wrap(err_msg, 78);
 
-	ctx.write("// local type to make static assert always fail\n");
-	ctx.write("struct codegen_error {};\n");
-	ctx.write(std::format(
+	ctx.writef("// local type to make static assert always fail\n");
+	ctx.writef("struct codegen_error {{}};\n");
+	ctx.writef(
 		"static_assert(std::is_same_v<{}, codegen_error>, ",
 		constexpr_err_type
-	));
-	ctx.write(std::format("\n\"| [Ecsact C++ Error]: {}\\n\"", err_title));
+	);
+	ctx.writef("\n\"| [Ecsact C++ Error]: {}\\n\"", err_title);
 	for(auto line : err_msg | std::views::split('\n')) {
-		ctx.write("\n\"| ", std::string_view{line.begin(), line.end()}, "\\n\"");
+		ctx.writef("\n\"| {}\\n\"", std::string_view{line.begin(), line.end()});
 	}
-	ctx.write(");");
+	ctx.writef(");");
 }
 
 static auto write_context_method_error_body(
@@ -101,7 +101,7 @@ static auto write_context_get_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& gettable_components
 ) -> void {
-	ctx.write("template<typename T>\n");
+	ctx.writef("template<typename T>\n");
 	block(ctx, "auto get() -> T", [&] {
 		write_context_method_error_body(
 			ctx,
@@ -113,7 +113,7 @@ static auto write_context_get_decl(
 			gettable_components
 		);
 	});
-	ctx.write("\n\n");
+	ctx.writef("\n\n");
 }
 
 static auto write_context_update_decl(
@@ -121,7 +121,7 @@ static auto write_context_update_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& updatable_components
 ) -> void {
-	ctx.write("template<typename T>\n");
+	ctx.writef("template<typename T>\n");
 	block(ctx, "auto update(const T& updated_component) -> void", [&] {
 		write_context_method_error_body(
 			ctx,
@@ -133,7 +133,7 @@ static auto write_context_update_decl(
 			updatable_components
 		);
 	});
-	ctx.write("\n\n");
+	ctx.writef("\n\n");
 }
 
 static auto write_context_add_decl(
@@ -141,8 +141,8 @@ static auto write_context_add_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& addable_components
 ) -> void {
-	ctx.write("template<typename T>\n");
-	ctx.write("\trequires(!std::is_empty_v<T>)\n");
+	ctx.writef("template<typename T>\n");
+	ctx.writef("\trequires(!std::is_empty_v<T>)\n");
 	block(ctx, "auto add(const T& new_component) -> void", [&] {
 		write_context_method_error_body(
 			ctx,
@@ -154,9 +154,9 @@ static auto write_context_add_decl(
 			addable_components
 		);
 	});
-	ctx.write("\n");
+	ctx.writef("\n");
 
-	ctx.write("template<typename T>\n");
+	ctx.writef("template<typename T>\n");
 	block(ctx, "auto add() -> void", [&] {
 		write_context_method_error_body(
 			ctx,
@@ -168,7 +168,7 @@ static auto write_context_add_decl(
 			addable_components
 		);
 	});
-	ctx.write("\n\n");
+	ctx.writef("\n\n");
 }
 
 static auto write_context_remove_decl(
@@ -176,7 +176,7 @@ static auto write_context_remove_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& removable_components
 ) -> void {
-	ctx.write("template<typename T>\n");
+	ctx.writef("template<typename T>\n");
 	block(ctx, "auto remove() -> void", [&] {
 		write_context_method_error_body(
 			ctx,
@@ -188,7 +188,7 @@ static auto write_context_remove_decl(
 			removable_components
 		);
 	});
-	ctx.write("\n\n");
+	ctx.writef("\n\n");
 }
 
 static auto write_context_has_decl(
@@ -196,7 +196,7 @@ static auto write_context_has_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& optional_components
 ) -> void {
-	ctx.write("template<typename T>\n");
+	ctx.writef("template<typename T>\n");
 	block(ctx, "auto has() -> bool", [&] {
 		write_context_method_error_body(
 			ctx,
@@ -208,7 +208,7 @@ static auto write_context_has_decl(
 			optional_components
 		);
 	});
-	ctx.write("\n\n");
+	ctx.writef("\n\n");
 }
 
 static auto write_context_other_decl(
@@ -224,10 +224,10 @@ static auto write_context_other_decl(
 		std::views::transform([](auto i) { return std::to_string(i); })
 	);
 
-	ctx.write(std::format(
+	ctx.writef(
 		"template<std::size_t Index{}>\n",
 		assoc_ids.size() == 1 ? " = 0" : ""
-	));
+	);
 	block(ctx, "auto other() -> other_context<Index>", [&] {
 		write_static_assert_codegen_error(
 			ctx,
@@ -241,7 +241,7 @@ static auto write_context_other_decl(
 		);
 	});
 
-	ctx.write("\n");
+	ctx.writef("\n");
 }
 
 static void write_context_action(
@@ -252,16 +252,16 @@ static void write_context_action(
 	auto cpp_full_name = cpp_identifier(full_name);
 
 	block(ctx, std::format("auto action() const -> {}", cpp_full_name), [&] {
-		ctx.write("return _ctx.action<", cpp_full_name, ">();");
+		ctx.writef("return _ctx.action<{}>();", cpp_full_name);
 	});
-	ctx.write("\n");
+	ctx.writef("\n");
 }
 
 static void write_context_entity(ecsact::codegen_plugin_context& ctx) {
 	block(ctx, "auto entity() const -> ecsact_entity_id", [&] {
-		ctx.write("return _ctx.entity();");
+		ctx.writef("return _ctx.entity();");
 	});
-	ctx.write("\n");
+	ctx.writef("\n");
 }
 
 static void write_context_get_specialize(
@@ -277,10 +277,10 @@ static void write_context_get_specialize(
 	block(
 		ctx,
 		std::format("template<> auto get<{0}>() -> {0}", cpp_full_name),
-		[&] { ctx.write(std::format("return _ctx.get<{}>();", cpp_full_name)); }
+		[&] { ctx.writef("return _ctx.get<{}>();", cpp_full_name); }
 	);
 
-	ctx.write("\n");
+	ctx.writef("\n");
 }
 
 static void write_context_add_specialize(
@@ -300,19 +300,17 @@ static void write_context_add_specialize(
 				"template<> auto add<{0}>(const {0}& new_component) -> void",
 				cpp_full_name
 			),
-			[&] {
-				ctx.write(std::format("_ctx.add<{}>(new_component);", cpp_full_name));
-			}
+			[&] { ctx.writef("_ctx.add<{}>(new_component);", cpp_full_name); }
 		);
 	} else {
 		block(
 			ctx,
 			std::format("template<> auto add<{}>() -> void", cpp_full_name),
-			[&] { ctx.write(std::format("_ctx.add<{}>();", cpp_full_name)); }
+			[&] { ctx.writef("_ctx.add<{}>();", cpp_full_name); }
 		);
 	}
 
-	ctx.write("\n");
+	ctx.writef("\n");
 }
 
 static auto write_context_update_specialize(
@@ -329,13 +327,9 @@ static auto write_context_update_specialize(
 			"template<> auto update<{0}>(const {0}& updated_component) -> void",
 			cpp_full_name
 		),
-		[&] {
-			ctx.write(
-				std::format("_ctx.update<{}>(updated_component);", cpp_full_name)
-			);
-		}
+		[&] { ctx.writef("_ctx.update<{}>(updated_component);", cpp_full_name); }
 	);
-	ctx.write("\n");
+	ctx.writef("\n");
 }
 
 static auto write_context_remove_specialize(
@@ -349,12 +343,10 @@ static auto write_context_remove_specialize(
 	block(
 		ctx,
 		std::format("template<> auto remove<{}>() -> void", cpp_full_name),
-		[&] {
-			ctx.write(std::format("return _ctx.remove<{}>();\n", cpp_full_name));
-		}
+		[&] { ctx.writef("return _ctx.remove<{}>();\n", cpp_full_name); }
 	);
 
-	ctx.write("\n");
+	ctx.writef("\n");
 }
 
 static auto write_context_other_specialize(
@@ -375,12 +367,12 @@ static auto write_context_other_specialize(
 		),
 		[&] {
 			block(ctx, std::format("return other_context<{}>", assoc_index), [&] {
-				ctx.write(std::format( //
+				ctx.writef( //
 					"._ctx = _ctx.other({}),",
 					c_impl_assoc_id_name
-				));
+				);
 			});
-			ctx.write(";");
+			ctx.writef(";");
 		}
 	);
 }
@@ -447,7 +439,7 @@ static auto write_context_body_common(
 	std::string                     ctx_name,
 	context_body_details            details
 ) -> void {
-	ctx.write("[[no_unique_address]] ::ecsact::execution_context _ctx;\n\n");
+	ctx.writef("[[no_unique_address]] ::ecsact::execution_context _ctx;\n\n");
 
 	if(!details.get_components.empty()) {
 		write_context_get_decl(ctx, ctx_name, details.get_components);
@@ -506,15 +498,15 @@ static auto write_sys_context(
 
 	auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
 
-	ctx.write("\n");
+	ctx.writef("\n");
 	block(ctx, std::format("struct {}::context", cpp_identifier(full_name)), [&] {
 		if(!assoc_ids.empty()) {
-			ctx.write("template<std::size_t Index>\n");
-			ctx.write("struct other_context;\n");
+			ctx.writef("template<std::size_t Index>\n");
+			ctx.writef("struct other_context;\n");
 		}
 
 		for(auto i = 0; assoc_ids.size() > i; ++i) {
-			ctx.write("\n");
+			ctx.writef("\n");
 			block(ctx, std::format("template<> struct other_context<{}>", i), [&] {
 				write_context_body_common(
 					ctx,
@@ -522,7 +514,7 @@ static auto write_sys_context(
 					context_body_details::from_assoc_id(sys_like_id, assoc_ids[i])
 				);
 			});
-			ctx.write(";\n\n");
+			ctx.writef(";\n\n");
 		}
 
 		std::optional<ecsact_system_like_id> parent_sys_like_id;
@@ -547,10 +539,10 @@ static auto write_sys_context(
 				parent_full_name += anonymous_system_name(*parent_sys_like_id);
 			}
 			auto parent_cpp_full_name = cpp_identifier(parent_full_name);
-			ctx.write("const ", parent_cpp_full_name, "::context parent() const;\n");
+			ctx.writef("const {}::context parent() const;\n", parent_cpp_full_name);
 		}
 
-		ctx.write("\n\n");
+		ctx.writef("\n\n");
 
 		for(auto i = 0; assoc_ids.size() > i; ++i) {
 			write_context_other_specialize(ctx, sys_like_id, assoc_ids[i], i);
@@ -558,7 +550,7 @@ static auto write_sys_context(
 
 		extra_body_fn();
 	});
-	ctx.write(";\n");
+	ctx.writef(";\n");
 };
 
 void ecsact_codegen_plugin(
@@ -568,8 +560,8 @@ void ecsact_codegen_plugin(
 ) {
 	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
-	ctx.write(GENERATED_FILE_DISCLAIMER);
-	ctx.write("#pragma once\n\n");
+	ctx.writef(GENERATED_FILE_DISCLAIMER);
+	ctx.writef("#pragma once\n\n");
 
 	fs::path package_hh_path = ecsact_meta_package_file_path(package_id);
 	fs::path package_systems_h_path = package_hh_path;
@@ -580,10 +572,10 @@ void ecsact_codegen_plugin(
 		package_systems_h_path.extension().string() + ".systems.h"
 	);
 
-	ctx.write("#include <type_traits>\n");
-	ctx.write("#include \"ecsact/cpp/execution_context.hh\"\n");
-	ctx.write("#include \"", package_hh_path.filename().string(), "\"\n");
-	ctx.write("#include \"", package_systems_h_path.filename().string(), "\"\n");
+	ctx.writef("#include <type_traits>\n");
+	ctx.writef("#include \"ecsact/cpp/execution_context.hh\"\n");
+	ctx.writef("#include \"{}\"\n", package_hh_path.filename().string());
+	ctx.writef("#include \"{}\"\n", package_systems_h_path.filename().string());
 
 	for(auto dep_pkg_id : ecsact::meta::get_dependencies(package_id)) {
 		fs::path dep_pkg_systems_hh_path =
@@ -599,12 +591,12 @@ void ecsact_codegen_plugin(
 			dep_pkg_systems_hh_path = dep_pkg_systems_hh_path.filename();
 		}
 
-		ctx.write("#include \"", dep_pkg_systems_hh_path.generic_string(), "\"\n");
+		ctx.writef("#include \"{}\"\n", dep_pkg_systems_hh_path.generic_string());
 	}
 
-	ctx.write("\n");
+	ctx.writef("\n");
 
-	ctx.write("\nstruct ecsact_system_execution_context;\n");
+	ctx.writef("\nstruct ecsact_system_execution_context;\n");
 
 	for(auto sys_id : get_system_ids(ctx.package_id)) {
 		write_sys_context(ctx, sys_id, [] {});
