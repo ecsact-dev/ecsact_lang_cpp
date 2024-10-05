@@ -74,28 +74,25 @@ static void write_system_impl_fn_decl(
 
 	auto c_impl_fn_name = c_identifier(full_name);
 
-	ctx.write("\n");
+	ctx.writef("\n");
 
 	auto assoc_ids = ecsact::meta::system_assoc_ids(id);
 
 	for(auto i = 0; assoc_ids.size() > i; ++i) {
 		auto c_impl_assoc_id_name = std::format("{}__{}", c_impl_fn_name, i);
-		ctx.write(std::format(
+		ctx.writef(
 			"ECSACT_EXTERN\n"
 			"ECSACT_EXPORT(\"{0}\")\n"
 			"const ecsact_system_assoc_id {0};\n",
 			c_impl_assoc_id_name
-		));
+		);
 	}
 
-	ctx.write(
+	ctx.writef(
 		"ECSACT_EXTERN\n",
-		"ECSACT_EXPORT(\"",
-		c_impl_fn_name,
-		"\")\n",
-		"void ",
-		c_impl_fn_name,
-		"(struct ecsact_system_execution_context*);\n"
+		"ECSACT_EXPORT(\"{0}\")\n"
+		"void {0}(struct ecsact_system_execution_context*);\n",
+		c_impl_fn_name
 	);
 }
 
@@ -109,11 +106,11 @@ void ecsact_codegen_plugin(
 	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 	const auto inc_guard_str = make_package_inc_guard_str(package_id);
 
-	ctx.write(GENERATED_FILE_DISCLAIMER);
-	ctx.write("#ifndef ", inc_guard_str, "\n");
-	ctx.write("#define ", inc_guard_str, "\n\n");
+	ctx.writef(GENERATED_FILE_DISCLAIMER);
+	ctx.writef("#ifndef {}\n", inc_guard_str);
+	ctx.writef("#define {}\n\n", inc_guard_str);
 
-	ctx.write("#include \"ecsact/runtime/common.h\"\n\n");
+	ctx.writef("#include \"ecsact/runtime/common.h\"\n\n");
 
 	for(auto action_id : get_action_ids(ctx.package_id)) {
 		write_system_impl_fn_decl(ctx, action_id);
@@ -123,6 +120,6 @@ void ecsact_codegen_plugin(
 		write_system_impl_fn_decl(ctx, sys_id);
 	}
 
-	ctx.write("\n");
-	ctx.write("#endif // ", inc_guard_str, "\n");
+	ctx.writef("\n");
+	ctx.writef("#endif // {}\n", inc_guard_str);
 }

@@ -16,13 +16,11 @@ static void write_constexpr_id(
 	T                               id,
 	std::string_view                indentation
 ) {
-	ctx.write(
+	ctx.writef(
+		"{}static constexpr auto id = static_cast<{}>({});\n",
 		indentation,
-		"static constexpr auto id = static_cast<",
 		id_type_name,
-		">(",
-		static_cast<int32_t>(id),
-		");\n"
+		static_cast<int32_t>(id)
 	);
 }
 
@@ -84,21 +82,23 @@ static void write_fields(
 		auto field_type = ecsact_meta_field_type(compo_id, field_id);
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
 
-		ctx.write(indentation);
-		ctx.write(cpp_field_type_name(field_type));
-		ctx.write(" "s, field_name);
+		ctx.writef(
+			"{}{} {}",
+			indentation,
+			cpp_field_type_name(field_type),
+			field_name
+		);
 
 		if(field_type.length > 1) {
-			ctx.write("[", field_type.length, "]");
+			ctx.writef("[{}]", field_type.length);
 		}
-		ctx.write(";\n");
+		ctx.writef(";\n");
 	}
 
-	ctx.write(
+	ctx.writef(
+		"{}auto operator<=>(const {}&) const = default;\n",
 		indentation,
-		"auto operator<=>(const ",
-		cpp_identifier(full_name),
-		"&) const = default;\n"
+		cpp_identifier(full_name)
 	);
 }
 
@@ -106,8 +106,8 @@ static void write_system_impl_decl(
 	ecsact::codegen_plugin_context& ctx,
 	std::string_view                indentation
 ) {
-	ctx.write(indentation, "struct context;\n");
-	ctx.write(indentation, "static void impl(context&);\n");
+	ctx.writef("{}struct context;\n", indentation);
+	ctx.writef("{}static void impl(context&);\n", indentation);
 }
 
 static void write_system_struct(
@@ -121,18 +121,18 @@ static void write_system_struct(
 
 	std::string sys_name = ecsact_meta_system_name(sys_id);
 	if(!sys_name.empty()) {
-		ctx.write(indentation, "struct "s, sys_name, " {\n"s);
+		ctx.writef("{}struct {} {{\n", indentation, sys_name);
 		write_constexpr_id(ctx, "ecsact_system_id", sys_id, indentation + "\t");
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
 			write_system_struct(ctx, child_system_id, indentation + "\t");
 		}
 		write_system_impl_decl(ctx, indentation + "\t");
-		ctx.write(indentation, "};\n"s);
+		ctx.writef("{}}};\n", indentation);
 	} else {
-		ctx.write(indentation, "struct "s, anonymous_system_name(sys_id), " {\n");
+		ctx.writef("{}struct {} {{\n", indentation, anonymous_system_name(sys_id));
 		write_constexpr_id(ctx, "ecsact_system_id", sys_id, indentation + "\t");
-		ctx.write(indentation, "\tstruct context;\n");
-		ctx.write(indentation, "};\n"s);
+		ctx.writef("{}\tstruct context;\n", indentation);
+		ctx.writef("{}}};\n", indentation);
 
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
 			write_system_struct(ctx, child_system_id, indentation);
@@ -175,66 +175,63 @@ void ecsact_codegen_plugin(
 
 	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
-	ctx.write(GENERATED_FILE_DISCLAIMER);
-	ctx.write("#pragma once\n\n");
+	ctx.writef(GENERATED_FILE_DISCLAIMER);
+	ctx.writef("#pragma once\n\n");
 
-	ctx.write("#include <cstdint>\n");
-	ctx.write("#include <compare>\n");
-	ctx.write("#include \"ecsact/runtime/common.h\"\n");
-	ctx.write("\n");
+	ctx.writef("#include <cstdint>\n");
+	ctx.writef("#include <compare>\n");
+	ctx.writef("#include \"ecsact/runtime/common.h\"\n");
+	ctx.writef("\n");
 
 	const auto namespace_str =
 		cpp_identifier(ecsact_meta_package_name(ctx.package_id));
 
-	ctx.write("namespace "s, namespace_str, " {\n\n"s);
+	ctx.writef("namespace {} {{\n\n", namespace_str);
 
 	for(auto enum_id : get_enum_ids(ctx.package_id)) {
-		ctx.write("enum class "s, ecsact_meta_enum_name(enum_id), "{");
+		ctx.writef("enum class {} {{", ecsact_meta_enum_name(enum_id));
 		++ctx.indentation;
-		ctx.write("\n");
+		ctx.writef("\n");
 
 		for(auto& enum_value : get_enum_values(enum_id)) {
-			ctx.write(enum_value.name, " = ", enum_value.value, ",\n");
+			ctx.writef("{} = {},\n", enum_value.name, enum_value.value);
 		}
-		ctx.write("};");
+		ctx.writef("}};");
 		--ctx.indentation;
 	}
 
 	for(auto comp_id : get_component_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
-		ctx.write("struct "s, ecsact_meta_component_name(comp_id), " {\n"s);
-		ctx.write("\tstatic constexpr bool transient = false;\n");
-		ctx.write(
-			"\tstatic constexpr bool has_assoc_fields = ",
-			has_assoc_fields(comp_id) ? "true" : "false",
-			";\n"
+		ctx.writef("struct {} {{\n", ecsact_meta_component_name(comp_id));
+		ctx.writef("\tstatic constexpr bool transient = false;\n");
+		ctx.writef(
+			"\tstatic constexpr bool has_assoc_fields = {};\n",
+			has_assoc_fields(comp_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_component_id", comp_id, "\t");
 		write_fields(ctx, compo_id, "\t"s);
-		ctx.write("};\n"s);
+		ctx.writef("}};\n");
 	}
 
 	for(auto comp_id : get_transient_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
-		ctx.write("struct "s, ecsact_meta_transient_name(comp_id), " {\n"s);
-		ctx.write("\tstatic constexpr bool transient = true;\n");
-		ctx.write(
-			"\tstatic constexpr bool has_assoc_fields = ",
-			has_assoc_fields(comp_id) ? "true" : "false",
-			";\n"
+		ctx.writef("struct {} {{\n", ecsact_meta_transient_name(comp_id));
+		ctx.writef("\tstatic constexpr bool transient = true;\n");
+		ctx.writef(
+			"\tstatic constexpr bool has_assoc_fields = {};\n",
+			has_assoc_fields(comp_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_transient_id", comp_id, "\t");
 		write_fields(ctx, compo_id, "\t"s);
-		ctx.write("};\n"s);
+		ctx.writef("}};\n");
 	}
 
 	for(auto action_id : get_action_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(action_id);
-		ctx.write("struct "s, ecsact_meta_action_name(action_id), " {\n"s);
-		ctx.write(
-			"\tstatic constexpr bool has_assoc_fields = ",
-			has_assoc_fields(action_id) ? "true" : "false",
-			";\n"
+		ctx.writef("struct {} {{\n", ecsact_meta_action_name(action_id));
+		ctx.writef(
+			"\tstatic constexpr bool has_assoc_fields = {};\n",
+			has_assoc_fields(action_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_action_id", compo_id, "\t");
 		for(auto child_system_id : get_child_system_ids(action_id)) {
@@ -242,7 +239,7 @@ void ecsact_codegen_plugin(
 		}
 		write_system_impl_decl(ctx, "\t");
 		write_fields(ctx, compo_id, "\t");
-		ctx.write("};\n"s);
+		ctx.writef("}};\n");
 	}
 
 	for(auto sys_id : get_system_ids(ctx.package_id)) {
@@ -253,5 +250,5 @@ void ecsact_codegen_plugin(
 		write_system_struct(ctx, sys_id, "");
 	}
 
-	ctx.write("\n}// namespace "s, namespace_str, "\n"s);
+	ctx.writef("\n}}// namespace {}\n", namespace_str);
 }

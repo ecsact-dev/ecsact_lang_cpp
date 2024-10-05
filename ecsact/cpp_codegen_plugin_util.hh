@@ -15,7 +15,7 @@ inline auto inc_header( //
 	ecsact::codegen_plugin_context& ctx,
 	auto&&                          header_path
 ) -> void {
-	ctx.write("#include \"", header_path, "\"\n");
+	ctx.writef("#include \"{}\"\n", header_path);
 }
 
 inline auto inc_package_header( //
@@ -77,23 +77,23 @@ class method_printer {
 		}
 
 		if(!parameters->empty()) {
-			ctx.write("\n");
+			ctx.writef("\n");
 		}
 
 		for(auto i = 0; parameters->size() > i; ++i) {
 			auto&& [param_type, param_name] = parameters->at(i);
-			ctx.write("\t", param_type, " ", param_name);
+			ctx.writef("\t{} {}", param_type, param_name);
 			if(i + 1 < parameters->size()) {
-				ctx.write(",");
+				ctx.writef(",");
 			}
-			ctx.write("\n");
+			ctx.writef("\n");
 		}
 
 		parameters = std::nullopt;
 
-		ctx.write(") -> ", type, " {");
+		ctx.writef(") -> {} {{", type);
 		ctx.indentation += 1;
-		ctx.write("\n");
+		ctx.writef("\n");
 	}
 
 public:
@@ -103,7 +103,7 @@ public:
 	)
 		: ctx(ctx) {
 		parameters.emplace();
-		ctx.write("auto ", method_name, "(");
+		ctx.writef("auto {} (", method_name);
 	}
 
 	method_printer(method_printer&& other) : ctx(other.ctx) {
@@ -148,7 +148,7 @@ public:
 		}
 		disposed = true;
 		ctx.indentation -= 1;
-		ctx.write("\n}\n\n");
+		ctx.writef("\n}}\n\n");
 	}
 };
 
@@ -158,9 +158,9 @@ class block_printer {
 
 public:
 	block_printer(ecsact::codegen_plugin_context& ctx) : ctx(ctx) {
-		ctx.write("{");
+		ctx.writef("{{");
 		ctx.indentation += 1;
-		ctx.write("\n");
+		ctx.writef("\n");
 	}
 
 	block_printer(block_printer&& other) : ctx(other.ctx) {
@@ -174,7 +174,7 @@ public:
 		}
 		disposed = true;
 		ctx.indentation -= 1;
-		ctx.write("\n}");
+		ctx.writef("\n}}");
 	}
 };
 
@@ -191,7 +191,7 @@ auto block( //
 	auto&&                          block_head,
 	std::invocable auto&&           block_body_fn
 ) {
-	ctx.write(block_head, " ");
+	ctx.writef("{} ", block_head);
 	auto printer = block_printer{ctx};
 	block_body_fn();
 }
@@ -202,10 +202,10 @@ auto block( //
 	std::invocable auto&&           block_body_fn,
 	auto&&                          block_tail
 ) {
-	ctx.write(block_head, " ");
+	ctx.writef("{} ", block_head);
 	auto printer = block_printer{ctx};
 	block_body_fn();
-	ctx.write(block_tail);
+	ctx.writef("{}", block_tail);
 }
 
 auto comma_delim(auto&& range) -> std::string {

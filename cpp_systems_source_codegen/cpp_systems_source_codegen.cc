@@ -20,14 +20,14 @@ void ecsact_codegen_plugin(
 	using ecsact::meta::get_all_system_like_ids;
 	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
-	ctx.write(GENERATED_FILE_DISCLAIMER);
+	ctx.writef(GENERATED_FILE_DISCLAIMER);
 
 	fs::path package_systems_hh_path = ecsact_meta_package_file_path(package_id);
 	package_systems_hh_path.replace_extension(
 		package_systems_hh_path.extension().string() + ".systems.hh"
 	);
 
-	ctx.write("#include \"", package_systems_hh_path.filename().string(), "\"\n");
+	ctx.writef("#include \"{}\"\n", package_systems_hh_path.filename().string());
 
 	for(auto sys_like_id : get_all_system_like_ids(ctx.package_id)) {
 		std::string full_name =
@@ -39,15 +39,13 @@ void ecsact_codegen_plugin(
 
 		auto cpp_full_name = cpp_identifier(full_name);
 
-		ctx.write(
-			"void ",
-			c_identifier(full_name),
-			"(struct ecsact_system_execution_context* cctx) {\n"
+		ctx.writef(
+			"void {} (struct ecsact_system_execution_context* cctx) {{\n",
+			c_identifier(full_name)
 		);
 
-		ctx.write("\t", cpp_full_name, "::context ctx{cctx};\n");
-		ctx.write("\t", cpp_full_name, "::impl(ctx);\n");
-
-		ctx.write("}\n");
+		ctx.writef("\t{}::context ctx{{cctx}};\n", cpp_full_name);
+		ctx.writef("\t{}::impl(ctx);\n", cpp_full_name);
+		ctx.writef("}}\n");
 	}
 }
