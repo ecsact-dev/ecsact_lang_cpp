@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.8 - 2024-10-07
+#### Miscellaneous Chores
+- **(deps)** update ecsact repositories (#218) - (aa0998f) - renovate[bot]
+- remove deprecated api usage (#219) - (74289d7) - Ezekiel Warren
+
+- - -
+
 ## 0.4.7 - 2024-08-27
 #### Features
 - Allow explicit file name outputs vs just the extension (#216) - (c51fc49) - Austin Kelway
