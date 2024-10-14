@@ -36,7 +36,8 @@ struct execution_context {
 		ecsact_system_execution_context_get(
 			_ctx,
 			ecsact_id_cast<ecsact_component_like_id>(C::id),
-			&comp
+			&comp,
+			nullptr
 		);
 		return comp;
 	}
@@ -47,7 +48,8 @@ struct execution_context {
 		ecsact_system_execution_context_update(
 			_ctx,
 			ecsact_id_cast<ecsact_component_like_id>(C::id),
-			&updated_component
+			&updated_component,
+			nullptr
 		);
 	}
 
@@ -55,7 +57,17 @@ struct execution_context {
 	ECSACT_ALWAYS_INLINE auto has() -> bool const {
 		return ecsact_system_execution_context_has(
 			_ctx,
-			ecsact_id_cast<ecsact_component_like_id>(C::id)
+			ecsact_id_cast<ecsact_component_like_id>(C::id),
+			nullptr
+		);
+	}
+
+	template<typename C>
+	ECSACT_ALWAYS_INLINE auto stream_toggle(bool enable_stream_data) -> void {
+		ecsact_system_execution_context_stream_toggle(
+			_ctx,
+			C::id,
+			enable_stream_data
 		);
 	}
 
@@ -83,7 +95,8 @@ struct execution_context {
 	ECSACT_ALWAYS_INLINE auto remove() -> void {
 		ecsact_system_execution_context_remove(
 			_ctx,
-			ecsact_id_cast<ecsact_component_like_id>(C::id)
+			ecsact_id_cast<ecsact_component_like_id>(C::id),
+			nullptr
 		);
 	}
 

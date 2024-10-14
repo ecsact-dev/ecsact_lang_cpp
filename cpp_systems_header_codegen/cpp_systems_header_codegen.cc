@@ -211,6 +211,27 @@ static auto write_context_has_decl(
 	ctx.writef("\n\n");
 }
 
+static auto write_context_stream_toggle_decl(
+	ecsact::codegen_plugin_context&           ctx,
+	std::string_view                          sys_like_full_name,
+	const std::set<ecsact_component_like_id>& stream_components
+) -> void {
+	ctx.write("template<typename T>\n");
+	block(ctx, "auto stream_toggle(bool stream_enable) -> void", [&] {
+		write_context_method_error_body(
+			ctx,
+			std::format(
+				"{} context.stream_toggle<T> may only be called with stream components "
+				"declared by the system. Did you forget to add stream toggle "
+				"capabilities?",
+				sys_like_full_name
+			),
+			stream_components
+		);
+	});
+	ctx.write("\n\n");
+}
+
 static auto write_context_other_decl(
 	ecsact::codegen_plugin_context&     ctx,
 	std::vector<ecsact_system_assoc_id> assoc_ids
@@ -349,6 +370,31 @@ static auto write_context_remove_specialize(
 	ctx.writef("\n");
 }
 
+static auto write_context_stream_toggle_specialize(
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_component_like_id        comp_id
+) -> void {
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
+	auto full_name = ecsact_meta_decl_full_name(decl_id);
+	auto cpp_full_name = cpp_identifier(full_name);
+
+	block(
+		ctx,
+		std::format(
+			"template<> auto stream_toggle<{}>(bool enable_stream) -> void",
+			cpp_full_name
+		),
+		[&] {
+			ctx.write(std::format(
+				"return _ctx.stream_toggle<{}>(enable_stream);\n",
+				cpp_full_name
+			));
+		}
+	);
+
+	ctx.write("\n");
+}
+
 static auto write_context_other_specialize(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_system_like_id           system_like_id,
@@ -383,6 +429,7 @@ struct context_body_details {
 	std::set<ecsact_component_like_id> update_components;
 	std::set<ecsact_component_like_id> remove_components;
 	std::set<ecsact_component_like_id> optional_components;
+	std::set<ecsact_component_like_id> stream_components;
 
 	static auto from_caps(auto caps) -> context_body_details {
 		auto details = context_body_details{};
@@ -406,6 +453,10 @@ struct context_body_details {
 
 			if((cap & ECSACT_SYS_CAP_OPTIONAL) == ECSACT_SYS_CAP_OPTIONAL) {
 				details.optional_components.emplace(comp_id);
+			}
+
+			if((cap & ECSACT_SYS_CAP_STREAM_TOGGLE) == ECSACT_SYS_CAP_STREAM_TOGGLE) {
+				details.stream_components.emplace(comp_id);
 			}
 		}
 
@@ -457,6 +508,10 @@ static auto write_context_body_common(
 		write_context_has_decl(ctx, ctx_name, details.optional_components);
 	}
 
+	if(!details.stream_components.empty()) {
+		write_context_stream_toggle_decl(ctx, ctx_name, details.stream_components);
+	}
+
 	for(auto get_comp_id : details.get_components) {
 		write_context_get_specialize(ctx, get_comp_id);
 	}
@@ -471,6 +526,10 @@ static auto write_context_body_common(
 
 	for(auto remove_comp_id : details.remove_components) {
 		write_context_remove_specialize(ctx, remove_comp_id);
+	}
+
+	for(auto stream_comp_id : details.stream_components) {
+		write_context_stream_toggle_specialize(ctx, stream_comp_id);
 	}
 
 	write_context_entity(ctx);
