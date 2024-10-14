@@ -52,11 +52,21 @@ cc_binary(
     srcs = [
         "system_impls.cc",
         ":ecsact_cc_system_impl_srcs",
+        # NOTE: added because @ecsact_runtime//dylib:dynamic stopped working
+        "@ecsact_runtime//dylib:dylib.cc",
+    ],
+    defines = [
+        # NOTE: added because @ecsact_runtime//dylib:dynamic stopped working
+        "ECSACT_DYNAMIC_API_LOAD_AT_RUNTIME",
     ],
     linkshared = True,
     deps = [
         ":ecsact_cc",
-        "@ecsact_runtime//dylib:dynamic",
+
+        # NOTE: this stopped working so we added @ecsact_runtime//dylib:dylib.cc
+        # "@ecsact_runtime//dylib:dynamic",
+        "@ecsact_runtime//:dylib",
+        "@ecsact_runtime//dylib:util",
     ],
 )
 
