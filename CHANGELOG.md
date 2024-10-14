@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.9 - 2024-10-14
+#### Features
+- new stream toggle api C++ wrapper (#217) - (fcc466c) - Ezekiel Warren
+
+- - -
+
 ## 0.4.8 - 2024-10-07
 #### Miscellaneous Chores
 - **(deps)** update ecsact repositories (#218) - (aa0998f) - renovate[bot]
