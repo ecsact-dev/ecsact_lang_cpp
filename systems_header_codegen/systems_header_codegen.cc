@@ -89,7 +89,7 @@ static void write_system_impl_fn_decl(
 	}
 
 	ctx.writef(
-		"ECSACT_EXTERN\n",
+		"ECSACT_EXTERN\n"
 		"ECSACT_EXPORT(\"{0}\")\n"
 		"void {0}(struct ecsact_system_execution_context*);\n",
 		c_impl_fn_name
