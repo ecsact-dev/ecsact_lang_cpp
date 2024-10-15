@@ -29,46 +29,129 @@ struct execution_context {
 		return action;
 	}
 
-	template<typename C>
+	template<typename C, typename... AssocFields>
 		requires(!std::is_empty_v<C>)
-	ECSACT_ALWAYS_INLINE auto get() const -> C {
-		C comp;
-		ecsact_system_execution_context_get(
-			_ctx,
-			ecsact_id_cast<ecsact_component_like_id>(C::id),
-			&comp,
-			nullptr
-		);
+	ECSACT_ALWAYS_INLINE auto get(AssocFields&&... assoc_fields) const -> C {
+		if constexpr(C::has_assoc_fields) {
+			static_assert(
+				sizeof...(AssocFields) > 0,
+				"must be called with assoc fields"
+			);
+		}
+
+		auto comp = C{};
+
+		if constexpr(sizeof...(AssocFields) > 0) {
+			const void* assoc_field_values[sizeof...(AssocFields)] = {
+				&assoc_fields...,
+			};
+
+			ecsact_system_execution_context_get(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				&comp,
+				assoc_field_values
+			);
+		} else {
+			ecsact_system_execution_context_get(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				&comp,
+				nullptr
+			);
+		}
 		return comp;
 	}
 
-	template<typename C>
+	template<typename C, typename... AssocFields>
 		requires(!std::is_empty_v<C>)
-	ECSACT_ALWAYS_INLINE auto update(const C& updated_component) -> void {
-		ecsact_system_execution_context_update(
-			_ctx,
-			ecsact_id_cast<ecsact_component_like_id>(C::id),
-			&updated_component,
-			nullptr
-		);
+	ECSACT_ALWAYS_INLINE auto update(
+		const C& updated_component,
+		AssocFields&&... assoc_fields
+	) -> void {
+		if constexpr(C::has_assoc_fields) {
+			static_assert(
+				sizeof...(AssocFields) > 0,
+				"must be called with assoc fields"
+			);
+		}
+
+		if constexpr(sizeof...(AssocFields) > 0) {
+			const void* assoc_field_values[sizeof...(AssocFields)] = {
+				&assoc_fields...,
+			};
+			ecsact_system_execution_context_update(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				&updated_component,
+				assoc_field_values
+			);
+		} else {
+			ecsact_system_execution_context_update(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				&updated_component,
+				nullptr
+			);
+		}
 	}
 
-	template<typename C>
-	ECSACT_ALWAYS_INLINE auto has() -> bool const {
-		return ecsact_system_execution_context_has(
-			_ctx,
-			ecsact_id_cast<ecsact_component_like_id>(C::id),
-			nullptr
-		);
+	template<typename C, typename... AssocFields>
+	ECSACT_ALWAYS_INLINE auto has(AssocFields&&... assoc_fields) -> bool const {
+		if constexpr(C::has_assoc_fields) {
+			static_assert(
+				sizeof...(AssocFields) > 0,
+				"must be called with assoc fields"
+			);
+		}
+
+		if constexpr(sizeof...(AssocFields) > 0) {
+			const void* assoc_field_values[sizeof...(AssocFields)] = {
+				&assoc_fields...,
+			};
+			return ecsact_system_execution_context_has(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				assoc_field_values
+			);
+		} else {
+			return ecsact_system_execution_context_has(
+				_ctx,
+				ecsact_id_cast<ecsact_component_like_id>(C::id),
+				nullptr
+			);
+		}
 	}
 
-	template<typename C>
-	ECSACT_ALWAYS_INLINE auto stream_toggle(bool enable_stream_data) -> void {
-		ecsact_system_execution_context_stream_toggle(
-			_ctx,
-			C::id,
-			enable_stream_data
-		);
+	template<typename C, typename... AssocFields>
+	ECSACT_ALWAYS_INLINE auto stream_toggle(
+		bool enable_stream_data,
+		AssocFields&&... assoc_fields
+	) -> void {
+		if constexpr(C::has_assoc_fields) {
+			static_assert(
+				sizeof...(AssocFields) > 0,
+				"must be called with assoc fields"
+			);
+		}
+		if constexpr(sizeof...(AssocFields) > 0) {
+			const void* assoc_field_values[sizeof...(AssocFields)] = {
+				&assoc_fields...,
+			};
+			ecsact_system_execution_context_stream_toggle(
+				_ctx,
+				C::id,
+				enable_stream_data,
+				assoc_field_values
+			);
+		} else {
+			ecsact_system_execution_context_stream_toggle(
+				_ctx,
+				C::id,
+				enable_stream_data,
+				nullptr
+			);
+		}
 	}
 
 	template<typename C>

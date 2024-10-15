@@ -101,8 +101,8 @@ static auto write_context_get_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& gettable_components
 ) -> void {
-	ctx.writef("template<typename T>\n");
-	block(ctx, "auto get() -> T", [&] {
+	ctx.writef("template<typename T, typename... AssocFields>\n");
+	block(ctx, "auto get(AssocFields&&... assoc_fields) -> T", [&] {
 		write_context_method_error_body(
 			ctx,
 			std::format(
@@ -121,18 +121,24 @@ static auto write_context_update_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& updatable_components
 ) -> void {
-	ctx.writef("template<typename T>\n");
-	block(ctx, "auto update(const T& updated_component) -> void", [&] {
-		write_context_method_error_body(
-			ctx,
-			std::format(
-				"{} context.update<T> may only be called with a component writable by "
-				"the system. Did you forget to add readwrite capabilities?",
-				sys_like_full_name
-			),
-			updatable_components
-		);
-	});
+	ctx.writef("template<typename T, typename... AssocFields>\n");
+	block(
+		ctx,
+		"auto update(const T& updated_component, AssocFields&&... assoc_fields) -> "
+		"void",
+		[&] {
+			write_context_method_error_body(
+				ctx,
+				std::format(
+					"{} context.update<T> may only be called with a component writable "
+					"by "
+					"the system. Did you forget to add readwrite capabilities?",
+					sys_like_full_name
+				),
+				updatable_components
+			);
+		}
+	);
 	ctx.writef("\n\n");
 }
 
@@ -176,8 +182,8 @@ static auto write_context_remove_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& removable_components
 ) -> void {
-	ctx.writef("template<typename T>\n");
-	block(ctx, "auto remove() -> void", [&] {
+	ctx.writef("template<typename T, typename... AssocFields>\n");
+	block(ctx, "auto remove(AssocFields&&... assoc_fields) -> void", [&] {
 		write_context_method_error_body(
 			ctx,
 			std::format(
@@ -196,8 +202,8 @@ static auto write_context_has_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& optional_components
 ) -> void {
-	ctx.writef("template<typename T>\n");
-	block(ctx, "auto has() -> bool", [&] {
+	ctx.writef("template<typename T, typename... AssocFields>\n");
+	block(ctx, "auto has(AssocFields&&... assoc_fields) -> bool", [&] {
 		write_context_method_error_body(
 			ctx,
 			std::format(
@@ -216,19 +222,25 @@ static auto write_context_stream_toggle_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& stream_components
 ) -> void {
-	ctx.write("template<typename T>\n");
-	block(ctx, "auto stream_toggle(bool stream_enable) -> void", [&] {
-		write_context_method_error_body(
-			ctx,
-			std::format(
-				"{} context.stream_toggle<T> may only be called with stream components "
-				"declared by the system. Did you forget to add stream toggle "
-				"capabilities?",
-				sys_like_full_name
-			),
-			stream_components
-		);
-	});
+	ctx.write("template<typename T, typename... AssocFields>\n");
+	block(
+		ctx,
+		"auto stream_toggle(bool stream_enable, AssocFields&&... assoc_fields) -> "
+		"void",
+		[&] {
+			write_context_method_error_body(
+				ctx,
+				std::format(
+					"{} context.stream_toggle<T> may only be called with stream "
+					"components "
+					"declared by the system. Did you forget to add stream toggle "
+					"capabilities?",
+					sys_like_full_name
+				),
+				stream_components
+			);
+		}
+	);
 	ctx.write("\n\n");
 }
 
@@ -285,6 +297,77 @@ static void write_context_entity(ecsact::codegen_plugin_context& ctx) {
 	ctx.writef("\n");
 }
 
+template<typename CompositeID>
+static auto assoc_field_ids( //
+	CompositeID compo_id
+) -> std::vector<ecsact_field_id> {
+	auto result = std::vector<ecsact_field_id>{};
+	for(auto field_id : ecsact::meta::get_field_ids(compo_id)) {
+		auto field_type = ecsact::meta::get_field_type(compo_id, field_id);
+
+		if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN) {
+			if(field_type.type.builtin == ECSACT_ENTITY_TYPE) {
+				result.push_back(field_id);
+				continue;
+			}
+		}
+
+		if(field_type.kind == ECSACT_TYPE_KIND_FIELD_INDEX) {
+			result.push_back(field_id);
+			continue;
+		}
+	}
+	return result;
+}
+
+template<typename CompositeID>
+static auto assoc_field_names_only_str(CompositeID compo_id) -> std::string {
+	auto result = std::string{};
+	for(auto field_id : assoc_field_ids(compo_id)) {
+		auto field_type = ecsact::meta::get_field_type(compo_id, field_id);
+		auto field_name = ecsact::meta::field_name(compo_id, field_id);
+		auto cpp_field_type_name =
+			ecsact::cc_lang_support::cpp_field_type_name(field_type);
+		result +=
+			std::format("std::forward<{0}>({1}), ", cpp_field_type_name, field_name);
+	}
+	if(!result.empty()) {
+		result = result.substr(0, result.size() - 2); // strip off ", "
+	}
+	return result;
+}
+
+template<typename CompositeID>
+static auto assoc_field_types_only_str(CompositeID compo_id) -> std::string {
+	auto result = std::string{};
+	for(auto field_id : assoc_field_ids(compo_id)) {
+		auto field_type = ecsact::meta::get_field_type(compo_id, field_id);
+		auto cpp_field_type_name =
+			ecsact::cc_lang_support::cpp_field_type_name(field_type);
+		result += std::format("{}, ", cpp_field_type_name);
+	}
+	if(!result.empty()) {
+		result = result.substr(0, result.size() - 2); // strip off ", "
+	}
+	return result;
+}
+
+template<typename CompositeID>
+static auto assoc_fields_str(CompositeID compo_id) -> std::string {
+	auto result = std::string{};
+	for(auto field_id : assoc_field_ids(compo_id)) {
+		auto field_type = ecsact::meta::get_field_type(compo_id, field_id);
+		auto field_name = ecsact::meta::field_name(compo_id, field_id);
+		auto cpp_field_type_name =
+			ecsact::cc_lang_support::cpp_field_type_name(field_type);
+		result += std::format("{}&& {}, ", cpp_field_type_name, field_name);
+	}
+	if(!result.empty()) {
+		result = result.substr(0, result.size() - 2); // strip off ", "
+	}
+	return result;
+}
+
 static void write_context_get_specialize(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_component_like_id        comp_id
@@ -294,11 +377,30 @@ static void write_context_get_specialize(
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
 	auto full_name = ecsact_meta_decl_full_name(decl_id);
 	auto cpp_full_name = cpp_identifier(full_name);
+	auto assoc_fields = assoc_fields_str(comp_id);
+	auto assoc_field_types_only = assoc_field_types_only_str(comp_id);
+	auto assoc_field_names_only = assoc_field_names_only_str(comp_id);
+
+	if(!assoc_field_types_only.empty()) {
+		assoc_field_types_only = ", " + assoc_field_types_only;
+	}
 
 	block(
 		ctx,
-		std::format("template<> auto get<{0}>() -> {0}", cpp_full_name),
-		[&] { ctx.writef("return _ctx.get<{}>();", cpp_full_name); }
+		std::format(
+			"template<> auto get<{0}{1}>({2}) -> {0}",
+			cpp_full_name,
+			assoc_field_types_only,
+			assoc_fields
+		),
+		[&] {
+			ctx.writef(
+				"return _ctx.get<{0}{1}>({2});",
+				cpp_full_name,
+				assoc_field_types_only,
+				assoc_field_names_only
+			);
+		}
 	);
 
 	ctx.writef("\n");
@@ -341,14 +443,38 @@ static auto write_context_update_specialize(
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
 	auto full_name = ecsact_meta_decl_full_name(decl_id);
 	auto cpp_full_name = cpp_identifier(full_name);
+	auto assoc_fields = assoc_fields_str(comp_id);
+	auto assoc_field_types_only = assoc_field_types_only_str(comp_id);
+	auto assoc_field_names_only = assoc_field_names_only_str(comp_id);
+
+	if(!assoc_field_types_only.empty()) {
+		assoc_field_types_only = ", " + assoc_field_types_only;
+	}
+
+	if(!assoc_fields.empty()) {
+		assoc_fields = ", " + assoc_fields;
+	}
+
+	if(!assoc_field_names_only.empty()) {
+		assoc_field_names_only = ", " + assoc_field_names_only;
+	}
 
 	block(
 		ctx,
 		std::format(
-			"template<> auto update<{0}>(const {0}& updated_component) -> void",
-			cpp_full_name
+			"template<> auto update<{0}{1}>(const {0}& updated_component{2}) -> "
+			"void",
+			cpp_full_name,
+			assoc_field_types_only,
+			assoc_fields
 		),
-		[&] { ctx.writef("_ctx.update<{}>(updated_component);", cpp_full_name); }
+		[&] {
+			ctx.writef(
+				"_ctx.update<{0}>(updated_component{1});",
+				cpp_full_name,
+				assoc_field_names_only
+			);
+		}
 	);
 	ctx.writef("\n");
 }
