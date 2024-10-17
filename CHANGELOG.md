@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.10 - 2024-10-17
+#### Features
+- use new field index api (#220) - (96d7be9) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update dependency ecsact_cli to v0.3.19 (#221) - (7f62cd7) - renovate[bot]
+
+- - -
+
 ## 0.4.9 - 2024-10-14
 #### Features
 - new stream toggle api C++ wrapper (#217) - (fcc466c) - Ezekiel Warren
