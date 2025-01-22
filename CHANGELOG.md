@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.11 - 2025-01-22
+#### Miscellaneous Chores
+- allow ecsact_runtime 0.8.x - (ac3fb80) - Ezekiel Warren
+
+- - -
+
 ## 0.4.10 - 2024-10-17
 #### Features
 - use new field index api (#220) - (96d7be9) - Ezekiel Warren
