@@ -77,9 +77,6 @@ static void write_fields(
 	using ecsact::cc_lang_support::cpp_type_str;
 	using namespace std::string_literals;
 
-	auto full_name =
-		ecsact_meta_decl_full_name(ecsact_id_cast<ecsact_decl_id>(compo_id));
-
 	for(auto field_id : get_field_ids(compo_id)) {
 		auto field_type = ecsact_meta_field_type(compo_id, field_id);
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
@@ -100,7 +97,34 @@ static void write_fields(
 		}
 		ctx.writef(";\n");
 	}
+}
 
+static void for_each_field(
+	ecsact_composite_id                                   compo_id,
+	std::invocable<ecsact_field_type, const char*> auto&& fn
+) {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::cc_lang_support::cpp_type_str;
+	using namespace std::string_literals;
+
+	for(auto field_id : get_field_ids(compo_id)) {
+		auto field_type = ecsact_meta_field_type(compo_id, field_id);
+		auto field_name = ecsact_meta_field_name(compo_id, field_id);
+		fn(field_type, field_name);
+	}
+}
+
+static auto write_operators(
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_composite_id             compo_id,
+	std::string_view                indentation
+) -> void {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::cc_lang_support::cpp_type_str;
+	using namespace std::string_literals;
+
+	auto full_name =
+		ecsact_meta_decl_full_name(ecsact_id_cast<ecsact_decl_id>(compo_id));
 	ctx.writef(
 		"{}auto operator<=>(const {}&) const = default;\n",
 		indentation,
@@ -170,7 +194,9 @@ static auto write_indexed_fields_struct(
 	CompositeID                     compo_id
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
+	using ecsact::cpp_codegen_plugin_util::method_printer;
 
+	ctx.writef("\n");
 	block(ctx, "struct IndexedFields", [&] {
 		write_fields(
 			ctx,
@@ -180,6 +206,27 @@ static auto write_indexed_fields_struct(
 			},
 			"\t"
 		);
+
+		{
+			ctx.writef("constexpr static ");
+			auto _ = method_printer(ctx, "from_composite")
+								 .parameter("const auto&", "composite")
+								 .return_type("IndexedFields");
+
+			block(ctx, "return", [&] {
+				for_each_field(
+					ecsact_id_cast<ecsact_composite_id>(compo_id),
+					[&](ecsact_field_type type, const char* field_name) {
+						if(type.kind != ECSACT_TYPE_KIND_FIELD_INDEX) {
+							return;
+						}
+
+						ctx.writef("\t.{0} = composite.{0},\n", field_name);
+					}
+				);
+			});
+			ctx.writef(";\n");
+		}
 	});
 	ctx.writef(";\n");
 }
@@ -235,8 +282,12 @@ void ecsact_codegen_plugin(
 			has_assoc_fields(comp_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_component_id", comp_id, "\t");
+		ctx.indentation += 1;
 		write_indexed_fields_struct(ctx, comp_id);
+		ctx.indentation -= 1;
+		ctx.writef("\n");
 		write_fields(ctx, compo_id, [](auto, auto) { return true; }, "\t"s);
+		write_operators(ctx, compo_id, "\t"s);
 		ctx.writef("}};\n");
 	}
 
@@ -249,8 +300,12 @@ void ecsact_codegen_plugin(
 			has_assoc_fields(comp_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_transient_id", comp_id, "\t");
+		ctx.indentation += 1;
 		write_indexed_fields_struct(ctx, comp_id);
+		ctx.indentation -= 1;
+		ctx.writef("\n");
 		write_fields(ctx, compo_id, [](auto, auto) { return true; }, "\t"s);
+		write_operators(ctx, compo_id, "\t"s);
 		ctx.writef("}};\n");
 	}
 
@@ -266,8 +321,12 @@ void ecsact_codegen_plugin(
 			write_system_struct(ctx, child_system_id, "\t");
 		}
 		write_system_impl_decl(ctx, "\t");
+		ctx.indentation += 1;
 		write_indexed_fields_struct(ctx, compo_id);
+		ctx.indentation -= 1;
+		ctx.writef("\n");
 		write_fields(ctx, compo_id, [](auto, auto) { return true; }, "\t");
+		write_operators(ctx, compo_id, "\t"s);
 		ctx.writef("}};\n");
 	}
 
