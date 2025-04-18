@@ -5,6 +5,7 @@
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
+#include "ecsact/cpp_codegen_plugin_util.hh"
 
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(// GENERATED FILE - DO NOT EDIT
 )";
@@ -67,9 +68,10 @@ static auto cpp_field_type_name(ecsact_field_type field_type) -> std::string {
 }
 
 static void write_fields(
-	ecsact::codegen_plugin_context& ctx,
-	ecsact_composite_id             compo_id,
-	std::string_view                indentation
+	ecsact::codegen_plugin_context&                       ctx,
+	ecsact_composite_id                                   compo_id,
+	std::predicate<ecsact_field_type, const char*> auto&& filter,
+	std::string_view                                      indentation
 ) {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cc_lang_support::cpp_type_str;
@@ -81,6 +83,10 @@ static void write_fields(
 	for(auto field_id : get_field_ids(compo_id)) {
 		auto field_type = ecsact_meta_field_type(compo_id, field_id);
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
+
+		if(!filter(field_type, field_name)) {
+			continue;
+		}
 
 		ctx.writef(
 			"{}{} {}",
@@ -158,6 +164,26 @@ static auto has_assoc_fields(CompositeID compo_id) -> bool {
 	return false;
 }
 
+template<typename CompositeID>
+static auto write_indexed_fields_struct(
+	ecsact::codegen_plugin_context& ctx,
+	CompositeID                     compo_id
+) -> void {
+	using ecsact::cpp_codegen_plugin_util::block;
+
+	block(ctx, "struct IndexedFields", [&] {
+		write_fields(
+			ctx,
+			ecsact_id_cast<ecsact_composite_id>(compo_id),
+			[](ecsact_field_type type, const char*) -> bool {
+				return type.kind == ECSACT_TYPE_KIND_FIELD_INDEX;
+			},
+			"\t"
+		);
+	});
+	ctx.writef(";\n");
+}
+
 void ecsact_codegen_plugin(
 	ecsact_package_id          package_id,
 	ecsact_codegen_write_fn_t  write_fn,
@@ -209,7 +235,8 @@ void ecsact_codegen_plugin(
 			has_assoc_fields(comp_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_component_id", comp_id, "\t");
-		write_fields(ctx, compo_id, "\t"s);
+		write_indexed_fields_struct(ctx, comp_id);
+		write_fields(ctx, compo_id, [](auto, auto) { return true; }, "\t"s);
 		ctx.writef("}};\n");
 	}
 
@@ -222,7 +249,8 @@ void ecsact_codegen_plugin(
 			has_assoc_fields(comp_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_transient_id", comp_id, "\t");
-		write_fields(ctx, compo_id, "\t"s);
+		write_indexed_fields_struct(ctx, comp_id);
+		write_fields(ctx, compo_id, [](auto, auto) { return true; }, "\t"s);
 		ctx.writef("}};\n");
 	}
 
@@ -238,7 +266,8 @@ void ecsact_codegen_plugin(
 			write_system_struct(ctx, child_system_id, "\t");
 		}
 		write_system_impl_decl(ctx, "\t");
-		write_fields(ctx, compo_id, "\t");
+		write_indexed_fields_struct(ctx, compo_id);
+		write_fields(ctx, compo_id, [](auto, auto) { return true; }, "\t");
 		ctx.writef("}};\n");
 	}
 
